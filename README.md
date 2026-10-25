@@ -1,5 +1,7 @@
 # Clínica Dental · Frontend
 
+[![CI](https://github.com/florenciaPenaSepulveda/dental-clinic-frontend/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/florenciaPenaSepulveda/dental-clinic-frontend/actions/workflows/ci.yml)
+
 Interfaz web de una clínica dental para reservar horas, ver la agenda del día y administrar pacientes. Consume la API REST del backend y está construida con React, Vite, TypeScript, Tailwind CSS y daisyUI.
 
 ## Repositorios del proyecto
