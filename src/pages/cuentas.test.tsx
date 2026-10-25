@@ -8,6 +8,7 @@ import { AuthProvider } from "../hooks/useAuth";
 import { guardarSesion, leerSesion } from "../lib/session";
 import { dentista, dentistaSinEspecialidad, paciente, pacienteSinContacto, sesionDe } from "../test/fixtures";
 import EquipoPage from "./EquipoPage";
+import LoginPage from "./LoginPage";
 import MiCuentaPage from "./MiCuentaPage";
 import PatientsPage from "./PatientsPage";
 
@@ -20,6 +21,7 @@ vi.mock("../api/client", () => ({
     cuentaPaciente: vi.fn(),
     pacientes: vi.fn(),
     cambiarClave: vi.fn(),
+    login: vi.fn(),
     historialPaciente: vi.fn(),
     logout: vi.fn(),
   },
@@ -34,6 +36,7 @@ const renderRutas = (ruta: string) =>
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<p>Inicio público</p>} />
+            <Route path="/ingresar" element={<LoginPage />} />
             <Route element={<RequireRol roles={["recepcion"]} />}>
               <Route path="/equipo" element={<EquipoPage />} />
               <Route path="/pacientes" element={<PatientsPage />} />
@@ -196,6 +199,59 @@ describe("Cuentas de pacientes", () => {
     mocked.pacientes.mockResolvedValue([{ ...paciente, tiene_cuenta: true }]);
     renderRutas("/pacientes");
     expect(await screen.findByRole("button", { name: "Restablecer acceso" })).toBeInTheDocument();
+  });
+});
+
+describe("Contraseña temporal", () => {
+  const temporal = () => guardarSesion({ ...sesionDe("recepcion"), debe_cambiar_clave: true });
+
+  it("obliga a cambiarla antes de usar cualquier sección", async () => {
+    temporal();
+    renderRutas("/equipo");
+    expect(await screen.findByText("Tu contraseña es temporal. Debes cambiarla para poder usar el sistema.")).toBeInTheDocument();
+    expect(mocked.dentistas).not.toHaveBeenCalled();
+    const menu = screen.getByRole("navigation", { name: "Principal" });
+    expect(menu).toHaveTextContent("Mi cuenta");
+    expect(menu).not.toHaveTextContent("Equipo");
+    expect(menu).not.toHaveTextContent("Pacientes");
+    expect(menu).not.toHaveTextContent("Reservar hora");
+  });
+
+  it("al iniciar sesión con una contraseña temporal lleva a Mi cuenta", async () => {
+    sessionStorage.clear();
+    const user = userEvent.setup();
+    mocked.login.mockResolvedValue({ ...sesionDe("dentista"), debe_cambiar_clave: true });
+    renderRutas("/ingresar");
+    await user.type(screen.getByLabelText("Usuario o RUT"), "dr.nuevo");
+    await user.type(screen.getByLabelText("Contraseña"), "Temporal-123");
+    await user.click(screen.getByRole("button", { name: "Ingresar" }));
+    expect(await screen.findByText(/Tu contraseña es temporal/)).toBeInTheDocument();
+  });
+
+  it("libera el acceso cuando la cambia", async () => {
+    temporal();
+    const user = userEvent.setup();
+    mocked.cambiarClave.mockResolvedValue(sesionDe("recepcion"));
+    renderRutas("/mi-cuenta");
+    await user.type(await screen.findByLabelText("Contraseña actual"), "Temporal-123");
+    await user.type(screen.getByLabelText("Nueva contraseña"), "Mi-clave-personal-26");
+    await user.type(screen.getByLabelText("Repite la nueva contraseña"), "Mi-clave-personal-26");
+    await user.click(screen.getByRole("button", { name: "Cambiar contraseña" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Contraseña actualizada.");
+    expect(screen.queryByText(/Tu contraseña es temporal/)).not.toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Principal" })).toHaveTextContent("Equipo");
+  });
+
+  it("no acepta conservar la misma contraseña", async () => {
+    temporal();
+    const user = userEvent.setup();
+    renderRutas("/mi-cuenta");
+    await user.type(await screen.findByLabelText("Contraseña actual"), "Temporal-123");
+    await user.type(screen.getByLabelText("Nueva contraseña"), "Temporal-123");
+    await user.type(screen.getByLabelText("Repite la nueva contraseña"), "Temporal-123");
+    await user.click(screen.getByRole("button", { name: "Cambiar contraseña" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("debe ser distinta de la actual");
+    expect(mocked.cambiarClave).not.toHaveBeenCalled();
   });
 });
 
