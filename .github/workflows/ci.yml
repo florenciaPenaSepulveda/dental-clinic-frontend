@@ -1,0 +1,27 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main, development, testing]
+  pull_request:
+
+jobs:
+  test:
+    name: Pruebas con cobertura y compilación
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Pruebas con cobertura
+        run: npm run test:cov
+
+      - name: Compilar
+        run: npm run build
