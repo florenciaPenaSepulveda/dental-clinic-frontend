@@ -41,6 +41,7 @@ const LoginPage = () => {
     <>
       <PageHeader title="Ingresar" subtitle="Para el personal de la clínica y para pacientes con cuenta." />
       <form onSubmit={enviar} className="surface mx-auto max-w-md space-y-4">
+        {pedido && <Notice tone="info">Inicia sesión para continuar.</Notice>}
         <label className="form-control">
           <span className="label py-1">
             <span className="field-label">Usuario o RUT</span>

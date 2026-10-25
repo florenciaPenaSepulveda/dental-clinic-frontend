@@ -92,11 +92,12 @@ const ReservationPage = () => {
         },
         archivos,
       );
+      const elegido = slots.find((slot) => slot.id === slotId);
+      const profesional = dentistas.find((dentista) => String(dentista.id) === dentistaId);
+      const detalle = elegido && profesional ? ` Te esperamos el ${formatFecha(fecha)} a las ${formatHora(elegido.hora)} con ${nombreCompleto(profesional)}.` : "";
       setAviso({
         tone: "success",
-        text: creada.sobrecupo
-          ? "Reserva confirmada como sobrecupo. Te avisaremos por correo si el paciente tiene email registrado."
-          : "Reserva confirmada. Si el paciente tiene email registrado, recibirá la confirmación por correo.",
+        text: `${creada.sobrecupo ? "Reserva confirmada como sobrecupo." : "Reserva confirmada."}${detalle} Si el paciente tiene email registrado, recibirá la confirmación por correo.`,
       });
       setSlotId(null);
       seleccion.reiniciar();
