@@ -36,6 +36,12 @@ export const Navbar = () => {
 
   return (
     <header className="bg-primary text-primary-content shadow">
+      <a
+        href="#contenido"
+        className="sr-only rounded-btn bg-base-100 px-3 py-2 text-sm font-medium text-primary focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50"
+      >
+        Saltar al contenido
+      </a>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3">
         <NavLink to="/" className="flex items-center gap-2 text-lg font-semibold">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-content text-primary">+</span>
@@ -71,7 +77,7 @@ export const Footer = () => (
 const Layout = () => (
   <div className="flex min-h-screen flex-col">
     <Navbar />
-    <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+    <main id="contenido" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
       <Outlet />
     </main>
     <Footer />
