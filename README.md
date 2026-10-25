@@ -14,7 +14,7 @@ Interfaz web de una clínica dental para reservar horas, ver la agenda del día 
 ## Funcionalidades
 
 - **Inicio:** dentistas y servicios con sus precios.
-- **Reservar hora:** elige dentista, servicio y fecha; los horarios se muestran en verde (disponible), ámbar (solo sobrecupo) o gris (completo). Permite reservar para un paciente existente o registrar uno nuevo en el mismo paso.
+- **Reservar hora:** elige dentista, servicio y fecha; los horarios se muestran en verde (disponible), ámbar (solo sobrecupo) o gris (completo). El paciente se identifica por su RUT: si ya está registrado se muestran sus datos (sin listar a los demás pacientes) y, si no existe, se piden los datos necesarios para registrarlo en el mismo paso.
 - **Agenda:** reservas del día filtradas por dentista, cancelación de reservas y generación de horarios en bloques de 30 minutos.
 - **Pacientes:** registro, búsqueda, edición y eliminación, con validación de RUT.
 
