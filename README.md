@@ -19,6 +19,7 @@ Interfaz web de una clínica dental para reservar horas, ver la agenda del día 
 - **Agenda semanal:** una semana por dentista con flechas para avanzar y retroceder. Cada horario muestra el detalle de su reserva, o permite agendar si está libre (incluye sobrecupos). Al abrir una reserva se puede cambiar el estado, el servicio, dejar observaciones internas, reprogramarla, cancelarla, ver el historial del paciente y gestionar sus archivos. La generación de horarios en bloques de 30 minutos está debajo del calendario.
 - **Exámenes adjuntos:** al reservar (o desde la agenda) se pueden subir hasta 5 archivos PDF, JPG o PNG de hasta 5 MB. Solo se descargan con sesión, por quien tiene acceso a esa reserva.
 - **Ficha clínica:** el dentista registra diagnóstico, procedimiento e indicaciones de cada atención. Recepción las lee; cada dentista ve solo a sus pacientes; cada paciente ve solo su propio historial con el profesional que lo atendió.
+- **Equipo y cuentas:** recepción registra y edita dentistas, y crea o restablece las cuentas de acceso de dentistas y pacientes (usuario y contraseña temporal que se muestra una sola vez). Cada usuario cambia su contraseña en Mi cuenta.
 - **Pacientes:** registro, búsqueda, edición y eliminación con validación de RUT (recepción) e historial por paciente. Los dentistas solo ven a quienes se atienden con ellos.
 
 ## Requisitos
@@ -58,7 +59,7 @@ src/api/          cliente de la API y tipos
 src/components/   diseño general y componentes compartidos
 src/hooks/        carga de datos
 src/lib/          validación de RUT y formato
-src/pages/        Inicio, Reservar hora, Ingreso, Activar cuenta, Agenda, Pacientes y Mi historial
+src/pages/        Inicio, Reservar hora, Ingreso, Activar cuenta, Agenda, Pacientes, Equipo, Mi historial y Mi cuenta
 ```
 
 ## Autoría
