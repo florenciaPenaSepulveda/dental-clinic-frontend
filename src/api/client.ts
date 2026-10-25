@@ -1,12 +1,19 @@
 import type {
+  Archivo,
+  AtencionInput,
   Dentista,
   GenerarSlotsInput,
+  HistorialItem,
+  MiHistorial,
   Paciente,
   PacienteInput,
   Reserva,
+  ReservaCambios,
   ReservaCreada,
+  ReservaInput,
   Servicio,
   SlotDisponible,
+  SlotSemana,
 } from "./types";
 import { borrarSesion, leerSesion, type Sesion } from "../lib/session";
 
@@ -43,7 +50,10 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
   let response: Response;
   try {
     response = await fetch(`${BASE_URL}${path}`, {
-      headers: { "Content-Type": "application/json", ...(sesion ? { Authorization: `Token ${sesion.token}` } : {}) },
+      headers: {
+        ...(init?.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+        ...(sesion ? { Authorization: `Token ${sesion.token}` } : {}),
+      },
       ...init,
     });
   } catch {
@@ -99,8 +109,46 @@ export const api = {
     request<SlotDisponible[]>(`/slots_por_fecha/${query({ fecha, dentista_id: dentistaId })}`),
   reservas: (filtros: { fecha?: string; dentista?: number } = {}) =>
     request<Reserva[]>(`/api/reservas/${query(filtros)}`),
-  crearReserva: (data: { slot: number; paciente: number; servicio?: number }) =>
-    request<ReservaCreada>("/reservas/", { method: "POST", body: JSON.stringify(data) }),
+  crearReserva: (data: ReservaInput, archivos: File[] = []) => {
+    if (archivos.length === 0) {
+      return request<ReservaCreada>("/reservas/", { method: "POST", body: JSON.stringify(data) });
+    }
+    const form = new FormData();
+    Object.entries(data).forEach(([campo, valor]) => valor !== undefined && form.append(campo, String(valor)));
+    archivos.forEach((archivo) => form.append("archivos", archivo));
+    return request<ReservaCreada>("/reservas/", { method: "POST", body: form });
+  },
+  actualizarReserva: (id: number, cambios: ReservaCambios) =>
+    request<Reserva>(`/api/reservas/${id}/`, { method: "PATCH", body: JSON.stringify(cambios) }),
+  guardarAtencion: (id: number, datos: AtencionInput) =>
+    request<Reserva>(`/api/reservas/${id}/atencion/`, { method: "PUT", body: JSON.stringify(datos) }),
+  subirArchivos: (id: number, archivos: File[]) => {
+    const form = new FormData();
+    archivos.forEach((archivo) => form.append("archivos", archivo));
+    return request<Archivo[]>(`/api/reservas/${id}/archivos/`, { method: "POST", body: form });
+  },
+  eliminarArchivo: (id: number) => request<void>(`/archivos/${id}/`, { method: "DELETE" }),
+  archivo: async (id: number): Promise<Blob> => {
+    const sesion = leerSesion();
+    let response: Response;
+    try {
+      response = await fetch(`${BASE_URL}/archivos/${id}/`, { headers: sesion ? { Authorization: `Token ${sesion.token}` } : {} });
+    } catch {
+      throw new ApiError("No se pudo conectar con el servidor. Verifica que el backend esté en ejecución.", 0);
+    }
+    if (!response.ok) {
+      if (response.status === 401 && sesion) {
+        borrarSesion();
+      }
+      throw new ApiError(messageFrom(await response.json().catch(() => null), response.status), response.status);
+    }
+    return response.blob();
+  },
+  semana: (desde: string, dentistaId?: number) => request<SlotSemana[]>(`/semana/${query({ desde, dentista: dentistaId })}`),
+  historialPaciente: (id: number) => request<HistorialItem[]>(`/api/pacientes/${id}/historial/`),
+  miHistorial: () => request<MiHistorial>("/mi/historial/"),
+  activarCuenta: (rut: string, email: string, password: string) =>
+    request<Sesion>("/auth/activar-cuenta/", { method: "POST", body: JSON.stringify({ rut, email, password }) }),
   cancelarReserva: (id: number) => request<void>(`/api/reservas/${id}/`, { method: "DELETE" }),
   generarSlots: (dentistaId: number, data: GenerarSlotsInput) =>
     request<{ created: number }>(`/dentistas/${dentistaId}/generar_slots/`, {
