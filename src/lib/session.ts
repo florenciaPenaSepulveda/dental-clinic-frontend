@@ -1,8 +1,14 @@
+import type { Rol } from "../api/types";
+
 const KEY = "clinica.sesion";
 
 export interface Sesion {
   token: string;
   username: string;
+  rol: Rol;
+  nombre: string;
+  dentista_id?: number;
+  paciente_id?: number;
 }
 
 const listeners = new Set<() => void>();

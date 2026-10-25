@@ -4,7 +4,8 @@ import { alCerrarSesion, borrarSesion, guardarSesion, leerSesion, type Sesion } 
 
 interface Auth {
   sesion: Sesion | null;
-  iniciarSesion: (username: string, password: string) => Promise<void>;
+  iniciarSesion: (username: string, password: string) => Promise<Sesion>;
+  activarCuenta: (rut: string, email: string, password: string) => Promise<Sesion>;
   cerrarSesion: () => Promise<void>;
 }
 
@@ -15,22 +16,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => alCerrarSesion(() => setSesion(null)), []);
 
-  const iniciarSesion = async (username: string, password: string) => {
-    const nueva = await api.login(username, password);
+  const abrirSesion = (nueva: Sesion) => {
     guardarSesion(nueva);
     setSesion(nueva);
+    return nueva;
   };
+
+  const iniciarSesion = async (username: string, password: string) => abrirSesion(await api.login(username, password));
+
+  const activarCuenta = async (rut: string, email: string, password: string) => abrirSesion(await api.activarCuenta(rut, email, password));
 
   const cerrarSesion = async () => {
     try {
       await api.logout();
     } catch {
-      // el token puede haber expirado: igual se cierra la sesión local
     }
     borrarSesion();
   };
 
-  return <AuthContext.Provider value={{ sesion, iniciarSesion, cerrarSesion }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ sesion, iniciarSesion, activarCuenta, cerrarSesion }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = (): Auth => {

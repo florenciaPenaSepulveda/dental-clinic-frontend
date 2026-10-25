@@ -55,6 +55,25 @@ export interface SlotDisponible extends Slot {
   sobrecupos_count: number;
 }
 
+export type Rol = "recepcion" | "dentista" | "paciente";
+
+export type EstadoReserva = "pendiente" | "atendida" | "no_asistio";
+
+export interface Archivo {
+  id: number;
+  nombre: string;
+  tipo: string;
+  tamano: number;
+  subido_en: string;
+}
+
+export interface Atencion {
+  diagnostico: string;
+  procedimiento: string;
+  indicaciones: string;
+  actualizado_en: string;
+}
+
 export interface Reserva {
   id: number;
   slot: Slot;
@@ -62,7 +81,57 @@ export interface Reserva {
   servicio: Servicio | null;
   creado_en: string;
   sobrecupo: boolean;
+  estado: EstadoReserva;
+  motivo: string;
+  observaciones: string;
+  archivos: Archivo[];
+  atencion: Atencion | null;
 }
+
+export interface SlotSemana {
+  id: number;
+  dentista: number;
+  fecha: string;
+  hora: string;
+  capacidad: number;
+  max_overbook: number;
+  reservas: Reserva[];
+}
+
+export interface HistorialItem {
+  id: number;
+  fecha: string;
+  hora: string;
+  dentista: { id: number; nombre: string; especialidad: string };
+  servicio: string | null;
+  estado: EstadoReserva;
+  motivo: string;
+  archivos: Archivo[];
+  atencion: Atencion | null;
+  observaciones?: string;
+}
+
+export interface MiHistorial {
+  paciente: Paciente;
+  proximas: HistorialItem[];
+  historial: HistorialItem[];
+}
+
+export interface ReservaInput {
+  slot: number;
+  paciente: number;
+  servicio?: number;
+  motivo?: string;
+}
+
+export interface ReservaCambios {
+  estado?: EstadoReserva;
+  observaciones?: string;
+  servicio?: number | null;
+  slot?: number;
+}
+
+export type AtencionInput = Pick<Atencion, "diagnostico" | "procedimiento" | "indicaciones">;
 
 export interface ReservaCreada {
   id: number;

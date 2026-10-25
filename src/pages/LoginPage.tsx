@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import { Notice } from "../components/States";
 import { useAuth } from "../hooks/useAuth";
@@ -8,14 +8,15 @@ const LoginPage = () => {
   const { sesion, iniciarSesion } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const destino = (location.state as { desde?: string } | null)?.desde ?? "/agenda";
+  const pedido = (location.state as { desde?: string } | null)?.desde;
+  const destinoPorRol = (rol?: string) => pedido ?? (rol === "paciente" ? "/mi-historial" : "/agenda");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
 
   if (sesion) {
-    return <Navigate to={destino} replace />;
+    return <Navigate to={destinoPorRol(sesion.rol)} replace />;
   }
 
   const enviar = async (event: FormEvent) => {
@@ -27,8 +28,8 @@ const LoginPage = () => {
     setEnviando(true);
     setError("");
     try {
-      await iniciarSesion(username.trim(), password);
-      navigate(destino, { replace: true });
+      const nueva = await iniciarSesion(username.trim(), password);
+      navigate(destinoPorRol(nueva.rol), { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar sesión.");
       setEnviando(false);
@@ -37,11 +38,11 @@ const LoginPage = () => {
 
   return (
     <>
-      <PageHeader title="Ingreso del personal" subtitle="La agenda y la ficha de pacientes son solo para el personal de la clínica." />
+      <PageHeader title="Ingresar" subtitle="Para el personal de la clínica y para pacientes con cuenta." />
       <form onSubmit={enviar} className="surface mx-auto max-w-md space-y-4">
         <label className="form-control">
           <span className="label py-1">
-            <span className="field-label">Usuario</span>
+            <span className="field-label">Usuario o RUT</span>
           </span>
           <input className="input input-bordered w-full" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} />
         </label>
@@ -62,6 +63,12 @@ const LoginPage = () => {
           {enviando && <span className="loading loading-spinner loading-sm" />}
           Ingresar
         </button>
+        <p className="text-center text-sm text-base-content/70">
+          ¿Eres paciente y aún no tienes cuenta?{" "}
+          <Link to="/activar-cuenta" className="link link-primary">
+            Actívala aquí
+          </Link>
+        </p>
       </form>
     </>
   );
