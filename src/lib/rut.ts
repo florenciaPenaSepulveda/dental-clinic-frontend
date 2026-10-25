@@ -1,4 +1,9 @@
-export const cleanRut = (value: string): string => value.replace(/[^0-9kK]/g, "").toUpperCase().slice(0, 9);
+const RUT_MINIMO = 1_000_000;
+
+export const cleanRut = (value: string): string => {
+  const clean = value.replace(/[^0-9kK]/g, "").toUpperCase();
+  return (clean.slice(0, -1).replace(/K/g, "") + clean.slice(-1)).slice(0, 9);
+};
 
 export const formatRut = (value: string): string => {
   const clean = cleanRut(value);
@@ -16,6 +21,9 @@ export const isValidRut = (value: string): boolean => {
   }
   const body = clean.slice(0, -1);
   const dv = clean.slice(-1);
+  if (Number(body) < RUT_MINIMO) {
+    return false;
+  }
   let sum = 0;
   let multiplier = 2;
   for (let i = body.length - 1; i >= 0; i--) {

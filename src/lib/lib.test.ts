@@ -12,6 +12,20 @@ describe("rut", () => {
     expect(isValidRut("23.232.323-K")).toBe(true);
     expect(isValidRut("20.000.007-0")).toBe(false);
   });
+
+  it("descarta caracteres ajenos y K fuera del dígito verificador", () => {
+    expect(cleanRut("12K345.678-5")).toBe("123456785");
+    expect(cleanRut("abc 12.345.678-5 xyz")).toBe("123456785");
+    expect(formatRut("12345678-5999")).toBe("12.345.678-5");
+  });
+
+  it("rechaza RUT con cuerpo menor al mínimo o vacío", () => {
+    expect(isValidRut("")).toBe(false);
+    expect(isValidRut("0000000-0")).toBe(false);
+    expect(isValidRut("00.000.000-0")).toBe(false);
+    expect(isValidRut("123456785")).toBe(true);
+    expect(isValidRut("1.000.005-K")).toBe(true);
+  });
 });
 
 describe("format", () => {
