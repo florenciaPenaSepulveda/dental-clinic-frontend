@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-base-200 text-base-content text-sm antialiased;
+  }
+}
+
+@layer components {
+  .page-title {
+    @apply text-2xl font-semibold text-primary;
+  }
+
+  .page-subtitle {
+    @apply mt-1 text-sm text-base-content/70;
+  }
+
+  .section-title {
+    @apply text-base font-semibold text-neutral;
+  }
+
+  .field-label {
+    @apply label-text text-sm font-medium text-neutral;
+  }
+
+  .surface {
+    @apply rounded-box border border-base-300 bg-base-100 p-5 shadow-sm;
+  }
+}
