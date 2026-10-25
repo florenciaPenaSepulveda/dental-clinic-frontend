@@ -72,6 +72,16 @@ export const api = {
   dentistas: () => request<Dentista[]>("/api/dentistas/"),
   servicios: () => request<Servicio[]>("/api/servicios/"),
   pacientes: () => request<Paciente[]>("/api/pacientes/"),
+  buscarPaciente: async (rut: string): Promise<Paciente | null> => {
+    try {
+      return await request<Paciente>(`/api/pacientes/buscar/${query({ rut })}`);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  },
   crearPaciente: (data: PacienteInput) =>
     request<Paciente>("/api/pacientes/", { method: "POST", body: JSON.stringify(data) }),
   actualizarPaciente: (id: number, data: PacienteInput) =>

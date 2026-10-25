@@ -49,6 +49,16 @@ describe("cliente de la API", () => {
     ]);
   });
 
+  it("busca un paciente por RUT y distingue cuando no existe", async () => {
+    const spy = respond({ id: 3, rut: "12.345.678-5" });
+    await expect(api.buscarPaciente("12.345.678-5")).resolves.toMatchObject({ id: 3 });
+    expect(String(spy.mock.calls[0][0])).toContain("/api/pacientes/buscar/?rut=12.345.678-5");
+    respond({ detail: "No existe un paciente con este RUT." }, 404);
+    await expect(api.buscarPaciente("11.111.111-1")).resolves.toBeNull();
+    respond({ detail: "El RUT ingresado no es válido." }, 400);
+    await expect(api.buscarPaciente("1")).rejects.toThrow("no es válido");
+  });
+
   it("maneja respuestas sin contenido", async () => {
     respond(null, 204);
     await expect(api.eliminarPaciente(1)).resolves.toBeUndefined();
