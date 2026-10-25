@@ -20,7 +20,7 @@ Interfaz web de una clínica dental para reservar horas, ver la agenda del día 
 - **Exámenes adjuntos:** al reservar (o desde la agenda) se pueden subir hasta 5 archivos PDF, JPG o PNG de hasta 5 MB. Solo se descargan con sesión, por quien tiene acceso a esa reserva.
 - **Ficha clínica:** el dentista registra diagnóstico, procedimiento e indicaciones de cada atención. Recepción las lee; cada dentista ve solo a sus pacientes; cada paciente ve solo su propio historial con el profesional que lo atendió.
 - **Equipo y cuentas:** recepción registra y edita dentistas, y crea o restablece las cuentas de acceso de dentistas y pacientes (usuario y contraseña temporal que se muestra una sola vez). La contraseña temporal obliga a cambiarla en el primer ingreso: hasta entonces solo está disponible Mi cuenta. Todos los usuarios pueden cambiar su contraseña desde ahí.
-- **Pacientes:** registro, búsqueda, edición y eliminación con validación de RUT (recepción) e historial por paciente. Los dentistas solo ven a quienes se atienden con ellos.
+- **Pacientes:** registro, búsqueda, edición y eliminación con validación de RUT (recepción) e historial por paciente. La lista está paginada (25 por página) y se busca en el servidor por nombre, correo o RUT (con o sin puntos y guion). Los dentistas solo ven a quienes se atienden con ellos.
 
 ## Requisitos
 
