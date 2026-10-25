@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
-import type { PacienteInput, Reserva, Slot } from "../api/types";
+import type { Paciente, PacienteInput, Reserva, Slot } from "../api/types";
 import PageHeader from "../components/PageHeader";
 import { EmptyState, Notice, Spinner } from "../components/States";
 import { useLoad } from "../hooks/useLoad";
@@ -28,20 +28,25 @@ const estiloDelEstado: Record<Estado, string> = {
   lleno: "btn-disabled",
 };
 
-const pacienteVacio: PacienteInput = { rut: "", nombre: "", apellido: "", telefono: "", email: "" };
+type Busqueda = { tipo: "inicial" } | { tipo: "buscando" } | { tipo: "existente"; paciente: Paciente } | { tipo: "nuevo" };
+
+type DatosNuevo = Omit<PacienteInput, "rut">;
+
+const datosVacios: DatosNuevo = { nombre: "", apellido: "", telefono: "", email: "" };
 
 const ReservationPage = () => {
   const [dentistaId, setDentistaId] = useState("");
   const [servicioId, setServicioId] = useState("");
   const [fecha, setFecha] = useState(todayISO(1));
   const [slotId, setSlotId] = useState<number | null>(null);
-  const [modo, setModo] = useState<"existente" | "nuevo">("existente");
-  const [pacienteId, setPacienteId] = useState("");
-  const [nuevo, setNuevo] = useState<PacienteInput>(pacienteVacio);
+  const [rut, setRut] = useState("");
+  const [busqueda, setBusqueda] = useState<Busqueda>({ tipo: "inicial" });
+  const [errorRut, setErrorRut] = useState("");
+  const [nuevo, setNuevo] = useState<DatosNuevo>(datosVacios);
   const [enviando, setEnviando] = useState(false);
   const [aviso, setAviso] = useState<{ tone: "success" | "error"; text: string } | null>(null);
 
-  const catalogos = useLoad(() => Promise.all([api.dentistas(), api.servicios(), api.pacientes()]), []);
+  const catalogos = useLoad(() => Promise.all([api.dentistas(), api.servicios()]), []);
   const agenda = useLoad(
     () =>
       dentistaId
@@ -50,7 +55,7 @@ const ReservationPage = () => {
     [dentistaId, fecha],
   );
 
-  const [dentistas, servicios, pacientes] = catalogos.data ?? [[], [], []];
+  const [dentistas, servicios] = catalogos.data ?? [[], []];
   const [slots, reservas] = agenda.data ?? [[], []];
 
   const elegirDentista = (valor: string) => {
@@ -65,16 +70,36 @@ const ReservationPage = () => {
     setAviso(null);
   };
 
-  const cambiarNuevo = (campo: keyof PacienteInput, valor: string) =>
-    setNuevo((actual) => ({ ...actual, [campo]: campo === "rut" ? formatRut(valor) : valor }));
+  const cambiarRut = (valor: string) => {
+    setRut(formatRut(valor));
+    setBusqueda({ tipo: "inicial" });
+    setErrorRut("");
+  };
+
+  const cambiarNuevo = (campo: keyof DatosNuevo, valor: string) => setNuevo((actual) => ({ ...actual, [campo]: valor }));
+
+  const buscarPaciente = async () => {
+    if (!isValidRut(rut)) {
+      setErrorRut("El RUT ingresado no es válido. Revisa los números y el dígito verificador.");
+      return;
+    }
+    setErrorRut("");
+    setBusqueda({ tipo: "buscando" });
+    try {
+      const encontrado = await api.buscarPaciente(rut);
+      setBusqueda(encontrado ? { tipo: "existente", paciente: encontrado } : { tipo: "nuevo" });
+    } catch (error) {
+      setBusqueda({ tipo: "inicial" });
+      setErrorRut(error instanceof Error ? error.message : "No se pudo buscar al paciente.");
+    }
+  };
 
   const validar = (): string => {
     if (!dentistaId) return "Elige un dentista.";
     if (slotId === null) return "Elige un horario disponible.";
-    if (modo === "existente" && !pacienteId) return "Elige un paciente o registra uno nuevo.";
-    if (modo === "nuevo") {
-      if (!isValidRut(nuevo.rut)) return "El RUT ingresado no es válido.";
-      if (!nuevo.nombre.trim() || !nuevo.apellido.trim()) return "Completa el nombre y el apellido del paciente.";
+    if (busqueda.tipo === "inicial" || busqueda.tipo === "buscando") return "Ingresa el RUT del paciente y presiona Buscar.";
+    if (busqueda.tipo === "nuevo" && (!nuevo.nombre.trim() || !nuevo.apellido.trim())) {
+      return "Completa el nombre y el apellido del paciente.";
     }
     return "";
   };
@@ -90,9 +115,9 @@ const ReservationPage = () => {
     setAviso(null);
     try {
       const paciente =
-        modo === "nuevo"
-          ? (await api.crearPaciente({ ...nuevo, nombre: nuevo.nombre.trim(), apellido: nuevo.apellido.trim() })).id
-          : Number(pacienteId);
+        busqueda.tipo === "existente"
+          ? busqueda.paciente.id
+          : (await api.crearPaciente({ ...nuevo, rut, nombre: nuevo.nombre.trim(), apellido: nuevo.apellido.trim() })).id;
       const creada = await api.crearReserva({
         slot: slotId as number,
         paciente,
@@ -105,9 +130,9 @@ const ReservationPage = () => {
           : "Reserva confirmada. Si el paciente tiene email registrado, recibirá la confirmación por correo.",
       });
       setSlotId(null);
-      setPacienteId("");
-      setNuevo(pacienteVacio);
-      setModo("existente");
+      setRut("");
+      setBusqueda({ tipo: "inicial" });
+      setNuevo(datosVacios);
       agenda.reload();
       catalogos.reload();
     } catch (error) {
@@ -216,37 +241,52 @@ const ReservationPage = () => {
 
         <section className="surface space-y-4">
           <h2 className="section-title">Paciente</h2>
-          <div role="tablist" className="tabs tabs-boxed bg-base-200">
-            <button type="button" role="tab" className={`tab ${modo === "existente" ? "tab-active" : ""}`} onClick={() => setModo("existente")}>
-              Existente
-            </button>
-            <button type="button" role="tab" className={`tab ${modo === "nuevo" ? "tab-active" : ""}`} onClick={() => setModo("nuevo")}>
-              Nuevo
-            </button>
+          <div className="form-control">
+            <label htmlFor="rut-paciente" className="label py-1">
+              <span className="field-label">RUT del paciente</span>
+            </label>
+            <div className="join w-full">
+              <input
+                id="rut-paciente"
+                className={`input input-bordered join-item w-full ${errorRut ? "input-error" : ""}`}
+                placeholder="12.345.678-5"
+                autoComplete="off"
+                value={rut}
+                onChange={(e) => cambiarRut(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    buscarPaciente();
+                  }
+                }}
+              />
+              <button type="button" className="btn btn-outline btn-primary join-item" disabled={busqueda.tipo === "buscando"} onClick={buscarPaciente}>
+                {busqueda.tipo === "buscando" && <span className="loading loading-spinner loading-sm" />}
+                Buscar
+              </button>
+            </div>
+            {errorRut && <p className="mt-1 text-sm text-error">{errorRut}</p>}
           </div>
 
-          {modo === "existente" ? (
-            <label className="form-control">
-              <span className="label py-1">
-                <span className="field-label">Paciente</span>
-              </span>
-              <select className="select select-bordered w-full" value={pacienteId} onChange={(e) => setPacienteId(e.target.value)}>
-                <option value="">Selecciona un paciente</option>
-                {pacientes.map((paciente) => (
-                  <option key={paciente.id} value={paciente.id}>
-                    {nombreCompleto(paciente)} · {paciente.rut}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : (
+          {busqueda.tipo === "existente" && (
+            <div className="rounded-box border border-success/40 bg-success/10 p-3 text-sm" aria-label="Paciente encontrado">
+              <p className="font-semibold">Paciente registrado</p>
+              <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                <dt className="text-base-content/70">Nombre</dt>
+                <dd>{nombreCompleto(busqueda.paciente)}</dd>
+                <dt className="text-base-content/70">RUT</dt>
+                <dd>{busqueda.paciente.rut}</dd>
+                <dt className="text-base-content/70">Teléfono</dt>
+                <dd>{busqueda.paciente.telefono || "Sin registrar"}</dd>
+                <dt className="text-base-content/70">Correo</dt>
+                <dd className="break-all">{busqueda.paciente.email || "Sin registrar"}</dd>
+              </dl>
+            </div>
+          )}
+
+          {busqueda.tipo === "nuevo" && (
             <div className="space-y-3">
-              <label className="form-control">
-                <span className="label py-1">
-                  <span className="field-label">RUT</span>
-                </span>
-                <input className="input input-bordered w-full" placeholder="12.345.678-5" value={nuevo.rut} onChange={(e) => cambiarNuevo("rut", e.target.value)} />
-              </label>
+              <p className="text-sm text-base-content/70">No encontramos este RUT. Completa los datos para registrar al paciente.</p>
               <div className="grid grid-cols-2 gap-3">
                 <label className="form-control">
                   <span className="label py-1">

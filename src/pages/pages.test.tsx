@@ -13,6 +13,7 @@ vi.mock("../api/client", () => ({
     dentistas: vi.fn(),
     servicios: vi.fn(),
     pacientes: vi.fn(),
+    buscarPaciente: vi.fn(),
     crearPaciente: vi.fn(),
     actualizarPaciente: vi.fn(),
     eliminarPaciente: vi.fn(),
@@ -69,9 +70,20 @@ describe("ReservationPage", () => {
     return screen.findByRole("button", { name: "08:00" });
   };
 
+  const buscarRut = async (user: ReturnType<typeof userEvent.setup>, rut: string) => {
+    await user.type(screen.getByLabelText("RUT del paciente"), rut);
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
+  };
+
   it("pide elegir un dentista antes de mostrar horarios", async () => {
     renderPage(<ReservationPage />);
     expect(await screen.findByText("Elige un dentista para ver sus horarios.")).toBeInTheDocument();
+  });
+
+  it("no descarga la lista de pacientes", async () => {
+    renderPage(<ReservationPage />);
+    await screen.findByRole("option", { name: /Ana Pérez/ });
+    expect(mocked.pacientes).not.toHaveBeenCalled();
   });
 
   it("muestra el estado de cada horario según la ocupación", async () => {
@@ -89,38 +101,69 @@ describe("ReservationPage", () => {
     const user = userEvent.setup();
     mocked.reservas.mockResolvedValue([reserva(2, 3)]);
     mocked.crearReserva.mockResolvedValue({ id: 9, sobrecupo: true });
+    mocked.buscarPaciente.mockResolvedValue(paciente);
     renderPage(<ReservationPage />);
     await elegirDentista(user);
     await user.click(screen.getByRole("button", { name: "09:00" }));
-    await user.selectOptions(screen.getAllByRole("combobox")[2], "1");
+    await buscarRut(user, "123456785");
+    await screen.findByText("Paciente registrado");
     await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
     expect(await screen.findByRole("status")).toHaveTextContent(/sobrecupo/i);
     expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 3, paciente: 1 });
   });
 
-  it("reserva con un paciente existente y un servicio", async () => {
+  it("encuentra al paciente por RUT, muestra sus datos y reserva con un servicio", async () => {
     const user = userEvent.setup();
+    mocked.buscarPaciente.mockResolvedValue(paciente);
     mocked.crearReserva.mockResolvedValue({ id: 9, sobrecupo: false });
     renderPage(<ReservationPage />);
     await elegirDentista(user);
     await user.selectOptions(screen.getAllByRole("combobox")[1], "1");
     await user.click(screen.getByRole("button", { name: "08:00" }));
-    await user.selectOptions(screen.getAllByRole("combobox")[2], "1");
+    await buscarRut(user, "123456785");
+    expect(mocked.buscarPaciente).toHaveBeenCalledWith("12.345.678-5");
+    const ficha = await screen.findByLabelText("Paciente encontrado");
+    expect(within(ficha).getByText("Juan Soto")).toBeInTheDocument();
+    expect(within(ficha).getByText("+56912345678")).toBeInTheDocument();
+    expect(within(ficha).getByText("juan@test.cl")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
     expect(await screen.findByRole("status")).toHaveTextContent("Reserva confirmada.");
     expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 1, paciente: 1, servicio: 1 });
+    expect(mocked.crearPaciente).not.toHaveBeenCalled();
     expect(mocked.slotsPorFecha).toHaveBeenCalledTimes(2);
+    expect(screen.getByLabelText("RUT del paciente")).toHaveValue("");
   });
 
-  it("registra un paciente nuevo antes de reservar", async () => {
+  it("indica los datos que faltan cuando el paciente no tiene teléfono ni correo", async () => {
     const user = userEvent.setup();
+    mocked.buscarPaciente.mockResolvedValue(pacienteSinContacto);
+    renderPage(<ReservationPage />);
+    await screen.findByRole("option", { name: /Ana Pérez/ });
+    await buscarRut(user, "111111111");
+    const ficha = await screen.findByLabelText("Paciente encontrado");
+    expect(within(ficha).getAllByText("Sin registrar")).toHaveLength(2);
+  });
+
+  it("busca al presionar Enter en el campo de RUT", async () => {
+    const user = userEvent.setup();
+    mocked.buscarPaciente.mockResolvedValue(paciente);
+    renderPage(<ReservationPage />);
+    await screen.findByRole("option", { name: /Ana Pérez/ });
+    await user.type(screen.getByLabelText("RUT del paciente"), "123456785{Enter}");
+    expect(await screen.findByText("Paciente registrado")).toBeInTheDocument();
+    expect(mocked.crearReserva).not.toHaveBeenCalled();
+  });
+
+  it("pide los datos y registra al paciente cuando el RUT no existe", async () => {
+    const user = userEvent.setup();
+    mocked.buscarPaciente.mockResolvedValue(null);
     mocked.crearPaciente.mockResolvedValue({ ...paciente, id: 7 });
     mocked.crearReserva.mockResolvedValue({ id: 9, sobrecupo: false });
     renderPage(<ReservationPage />);
     await elegirDentista(user);
     await user.click(screen.getByRole("button", { name: "08:00" }));
-    await user.click(screen.getByRole("tab", { name: "Nuevo" }));
-    await user.type(screen.getByPlaceholderText("12.345.678-5"), "123456785");
+    await buscarRut(user, "123456785");
+    expect(await screen.findByText(/No encontramos este RUT/)).toBeInTheDocument();
     await user.type(screen.getByLabelText("Nombre"), " Juan ");
     await user.type(screen.getByLabelText("Apellido"), "Soto");
     await user.type(screen.getByLabelText("Teléfono"), "999");
@@ -136,8 +179,51 @@ describe("ReservationPage", () => {
     });
   });
 
+  it("no consulta al servidor cuando el RUT es inválido", async () => {
+    const user = userEvent.setup();
+    renderPage(<ReservationPage />);
+    await screen.findByRole("option", { name: /Ana Pérez/ });
+    await buscarRut(user, "123456789");
+    expect(screen.getByText(/El RUT ingresado no es válido/)).toBeInTheDocument();
+    expect(mocked.buscarPaciente).not.toHaveBeenCalled();
+    await user.clear(screen.getByLabelText("RUT del paciente"));
+    expect(screen.queryByText(/El RUT ingresado no es válido/)).not.toBeInTheDocument();
+  });
+
+  it("formatea el RUT mientras se escribe y descarta caracteres ajenos", async () => {
+    const user = userEvent.setup();
+    renderPage(<ReservationPage />);
+    await screen.findByRole("option", { name: /Ana Pérez/ });
+    await user.type(screen.getByLabelText("RUT del paciente"), "12abc345.678 5");
+    expect(screen.getByLabelText("RUT del paciente")).toHaveValue("12.345.678-5");
+  });
+
+  it("muestra el error si falla la búsqueda y permite reintentar", async () => {
+    const user = userEvent.setup();
+    mocked.buscarPaciente.mockRejectedValueOnce(new Error("Sin conexión")).mockResolvedValueOnce(paciente);
+    renderPage(<ReservationPage />);
+    await screen.findByRole("option", { name: /Ana Pérez/ });
+    await buscarRut(user, "123456785");
+    expect(await screen.findByText("Sin conexión")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
+    expect(await screen.findByText("Paciente registrado")).toBeInTheDocument();
+    expect(screen.queryByText("Sin conexión")).not.toBeInTheDocument();
+  });
+
+  it("vuelve a pedir la búsqueda si se edita el RUT después de encontrarlo", async () => {
+    const user = userEvent.setup();
+    mocked.buscarPaciente.mockResolvedValue(paciente);
+    renderPage(<ReservationPage />);
+    await screen.findByRole("option", { name: /Ana Pérez/ });
+    await buscarRut(user, "123456785");
+    await screen.findByText("Paciente registrado");
+    await user.type(screen.getByLabelText("RUT del paciente"), "{Backspace}");
+    expect(screen.queryByText("Paciente registrado")).not.toBeInTheDocument();
+  });
+
   it("valida los datos antes de enviar", async () => {
     const user = userEvent.setup();
+    mocked.buscarPaciente.mockResolvedValue(null);
     renderPage(<ReservationPage />);
     await screen.findByRole("option", { name: /Ana Pérez/ });
     await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
@@ -149,29 +235,42 @@ describe("ReservationPage", () => {
 
     await user.click(screen.getByRole("button", { name: "08:00" }));
     await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("Elige un paciente");
+    expect(screen.getByRole("alert")).toHaveTextContent("Ingresa el RUT del paciente");
 
-    await user.click(screen.getByRole("tab", { name: "Nuevo" }));
-    await user.type(screen.getByPlaceholderText("12.345.678-5"), "123456789");
-    await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("RUT");
-
-    await user.clear(screen.getByPlaceholderText("12.345.678-5"));
-    await user.type(screen.getByPlaceholderText("12.345.678-5"), "123456785");
+    await buscarRut(user, "123456785");
+    await screen.findByText(/No encontramos este RUT/);
     await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
     expect(screen.getByRole("alert")).toHaveTextContent("nombre y el apellido");
+    expect(mocked.crearPaciente).not.toHaveBeenCalled();
     expect(mocked.crearReserva).not.toHaveBeenCalled();
   });
 
   it("muestra el error del servidor al reservar", async () => {
     const user = userEvent.setup();
+    mocked.buscarPaciente.mockResolvedValue(paciente);
     mocked.crearReserva.mockRejectedValue(new Error("El slot está lleno"));
     renderPage(<ReservationPage />);
     await elegirDentista(user);
     await user.click(screen.getByRole("button", { name: "08:00" }));
-    await user.selectOptions(screen.getAllByRole("combobox")[2], "1");
+    await buscarRut(user, "123456785");
+    await screen.findByText("Paciente registrado");
     await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("El slot está lleno");
+  });
+
+  it("muestra el error del servidor si no se puede registrar al paciente", async () => {
+    const user = userEvent.setup();
+    mocked.buscarPaciente.mockResolvedValue(null);
+    mocked.crearPaciente.mockRejectedValue(new Error("rut: Ya existe un paciente con este RUT."));
+    renderPage(<ReservationPage />);
+    await elegirDentista(user);
+    await user.click(screen.getByRole("button", { name: "08:00" }));
+    await buscarRut(user, "123456785");
+    await user.type(await screen.findByLabelText("Nombre"), "Juan");
+    await user.type(screen.getByLabelText("Apellido"), "Soto");
+    await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Ya existe un paciente");
+    expect(mocked.crearReserva).not.toHaveBeenCalled();
   });
 
   it("limpia la selección al cambiar de fecha y muestra el vacío sin horarios", async () => {
