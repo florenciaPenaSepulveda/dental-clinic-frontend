@@ -15,9 +15,11 @@ Interfaz web de una clínica dental para reservar horas, ver la agenda del día 
 
 - **Inicio:** dentistas y servicios con sus precios.
 - **Reservar hora:** elige dentista, servicio y fecha; los horarios se muestran en verde (disponible), ámbar (solo sobrecupo) o gris (completo). El paciente se identifica por su RUT: si ya está registrado se muestran sus datos (sin listar a los demás pacientes) y, si no existe, se piden los datos necesarios para registrarlo en el mismo paso.
-- **Ingreso del personal:** la Agenda y los Pacientes solo se muestran con sesión iniciada (usuario del backend); el público solo ve el inicio y la reserva. La sesión dura mientras la pestaña esté abierta.
-- **Agenda:** reservas del día filtradas por dentista, cancelación de reservas y generación de horarios en bloques de 30 minutos.
-- **Pacientes:** registro, búsqueda, edición y eliminación, con validación de RUT.
+- **Ingreso por rol:** el público solo ve el inicio y la reserva. Con sesión iniciada, recepción y dentistas ven la Agenda y los Pacientes, y los pacientes con cuenta ven su historial. La sesión dura mientras la pestaña esté abierta. Un paciente activa su cuenta con su RUT y el correo registrado en la clínica.
+- **Agenda semanal:** una semana por dentista con flechas para avanzar y retroceder. Cada horario muestra el detalle de su reserva, o permite agendar si está libre (incluye sobrecupos). Al abrir una reserva se puede cambiar el estado, el servicio, dejar observaciones internas, reprogramarla, cancelarla, ver el historial del paciente y gestionar sus archivos. La generación de horarios en bloques de 30 minutos está debajo del calendario.
+- **Exámenes adjuntos:** al reservar (o desde la agenda) se pueden subir hasta 5 archivos PDF, JPG o PNG de hasta 5 MB. Solo se descargan con sesión, por quien tiene acceso a esa reserva.
+- **Ficha clínica:** el dentista registra diagnóstico, procedimiento e indicaciones de cada atención. Recepción las lee; cada dentista ve solo a sus pacientes; cada paciente ve solo su propio historial con el profesional que lo atendió.
+- **Pacientes:** registro, búsqueda, edición y eliminación con validación de RUT (recepción) e historial por paciente. Los dentistas solo ven a quienes se atienden con ellos.
 
 ## Requisitos
 
@@ -56,7 +58,7 @@ src/api/          cliente de la API y tipos
 src/components/   diseño general y componentes compartidos
 src/hooks/        carga de datos
 src/lib/          validación de RUT y formato
-src/pages/        Inicio, Reservar hora, Ingreso, Agenda y Pacientes
+src/pages/        Inicio, Reservar hora, Ingreso, Activar cuenta, Agenda, Pacientes y Mi historial
 ```
 
 ## Autoría
