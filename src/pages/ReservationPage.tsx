@@ -5,7 +5,7 @@ import type { Paciente, PacienteInput, SlotDisponible } from "../api/types";
 import PageHeader from "../components/PageHeader";
 import { EmptyState, Notice, Spinner } from "../components/States";
 import { useLoad } from "../hooks/useLoad";
-import { formatFecha, formatHora, nombreCompleto, todayISO } from "../lib/format";
+import { formatFecha, formatHora, formatPrecio, nombreCompleto, todayISO } from "../lib/format";
 import { formatRut, isValidRut } from "../lib/rut";
 
 type Estado = "disponible" | "sobrecupo" | "lleno";
@@ -168,10 +168,11 @@ const ReservationPage = () => {
                 <option value="">Sin especificar</option>
                 {servicios.map((servicio) => (
                   <option key={servicio.id} value={servicio.id}>
-                    {servicio.nombre}
+                    {servicio.nombre} · {formatPrecio(servicio.precio)}
                   </option>
                 ))}
               </select>
+              <span className="mt-1 text-xs text-base-content/60">Valor referencial: el pago se realiza en la consulta.</span>
             </label>
             <label className="form-control">
               <span className="label py-1">
