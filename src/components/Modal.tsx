@@ -5,9 +5,10 @@ interface Props {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  wide?: boolean;
 }
 
-const Modal = ({ open, title, onClose, children }: Props) => {
+const Modal = ({ open, title, onClose, children, wide = false }: Props) => {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -25,7 +26,7 @@ const Modal = ({ open, title, onClose, children }: Props) => {
 
   return (
     <dialog ref={ref} className="modal" onClose={onClose}>
-      <div className="modal-box max-w-lg">
+      <div className={`modal-box ${wide ? "max-w-3xl" : "max-w-lg"}`}>
         <h3 className="mb-4 text-lg font-semibold text-primary">{title}</h3>
         {children}
       </div>
