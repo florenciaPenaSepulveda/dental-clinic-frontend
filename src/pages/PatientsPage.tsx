@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { api } from "../api/client";
 import type { Paciente, PacienteInput } from "../api/types";
+import CuentaModal from "../components/CuentaModal";
 import HistorialPacienteModal from "../components/HistorialPacienteModal";
 import Modal from "../components/Modal";
 import PageHeader from "../components/PageHeader";
@@ -18,6 +19,7 @@ const PatientsPage = () => {
   const { sesion } = useAuth();
   const puedeEditar = sesion?.rol === "recepcion";
   const [historialDe, setHistorialDe] = useState<Paciente | null>(null);
+  const [cuentaDe, setCuentaDe] = useState<Paciente | null>(null);
   const [busqueda, setBusqueda] = useState("");
   const [abierto, setAbierto] = useState(false);
   const [editando, setEditando] = useState<Paciente | null>(null);
@@ -153,6 +155,9 @@ const PatientsPage = () => {
                           <button className="btn btn-ghost btn-xs" onClick={() => abrirEdicion(paciente)}>
                             Editar
                           </button>
+                          <button className="btn btn-ghost btn-xs" onClick={() => setCuentaDe(paciente)}>
+                            {paciente.tiene_cuenta ? "Restablecer acceso" : "Crear cuenta"}
+                          </button>
                           <button className="btn btn-ghost btn-xs text-error" onClick={() => eliminar(paciente)}>
                             Eliminar
                           </button>
@@ -219,6 +224,7 @@ const PatientsPage = () => {
         </form>
       </Modal>
       <HistorialPacienteModal paciente={historialDe} onClose={() => setHistorialDe(null)} />
+      <CuentaModal persona={cuentaDe} generar={(persona) => api.cuentaPaciente(persona.id)} onClose={() => setCuentaDe(null)} onHecho={pacientes.reload} />
     </>
   );
 };

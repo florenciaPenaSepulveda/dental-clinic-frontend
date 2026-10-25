@@ -1,7 +1,9 @@
 import type {
   Archivo,
   AtencionInput,
+  CuentaCreada,
   Dentista,
+  DentistaInput,
   GenerarSlotsInput,
   HistorialItem,
   MiHistorial,
@@ -88,6 +90,13 @@ export const api = {
     request<Sesion>("/auth/login/", { method: "POST", body: JSON.stringify({ username, password }) }),
   logout: () => request<void>("/auth/logout/", { method: "POST" }),
   dentistas: () => request<Dentista[]>("/api/dentistas/"),
+  crearDentista: (data: DentistaInput) => request<Dentista>("/api/dentistas/", { method: "POST", body: JSON.stringify(data) }),
+  actualizarDentista: (id: number, data: DentistaInput) =>
+    request<Dentista>(`/api/dentistas/${id}/`, { method: "PATCH", body: JSON.stringify(data) }),
+  cuentaDentista: (id: number) => request<CuentaCreada>(`/api/dentistas/${id}/cuenta/`, { method: "POST" }),
+  cuentaPaciente: (id: number) => request<CuentaCreada>(`/api/pacientes/${id}/cuenta/`, { method: "POST" }),
+  cambiarClave: (actual: string, nueva: string) =>
+    request<Sesion>("/auth/cambiar-clave/", { method: "POST", body: JSON.stringify({ actual, nueva }) }),
   servicios: () => request<Servicio[]>("/api/servicios/"),
   pacientes: () => request<Paciente[]>("/api/pacientes/"),
   buscarPaciente: async (rut: string): Promise<Paciente | null> => {

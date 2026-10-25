@@ -13,6 +13,15 @@ export interface Dentista {
   telefono: string;
   region: Region | null;
   max_overbook_day: number;
+  tiene_cuenta: boolean;
+}
+
+export type DentistaInput = Pick<Dentista, "nombre" | "apellido" | "especialidad" | "email" | "telefono" | "max_overbook_day">;
+
+export interface CuentaCreada {
+  username: string;
+  password: string;
+  creada: boolean;
 }
 
 export interface Servicio {
@@ -30,6 +39,7 @@ export interface Paciente {
   telefono: string;
   email: string;
   fecha_registro: string;
+  tiene_cuenta: boolean;
 }
 
 export interface PacienteInput {
