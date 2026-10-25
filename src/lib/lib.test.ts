@@ -1,5 +1,6 @@
 import { formatFecha, formatHora, formatPrecio, nombreCompleto, todayISO } from "./format";
 import { cleanRut, formatRut, isValidRut } from "./rut";
+import { alCerrarSesion, borrarSesion, guardarSesion, leerSesion } from "./session";
 
 describe("rut", () => {
   it("limpia, formatea y valida", () => {
@@ -25,6 +26,29 @@ describe("rut", () => {
     expect(isValidRut("00.000.000-0")).toBe(false);
     expect(isValidRut("123456785")).toBe(true);
     expect(isValidRut("1.000.005-K")).toBe(true);
+  });
+});
+
+describe("session", () => {
+  afterEach(() => sessionStorage.clear());
+
+  it("guarda, lee y borra la sesión avisando a los oyentes", () => {
+    const oyente = vi.fn();
+    const quitar = alCerrarSesion(oyente);
+    expect(leerSesion()).toBeNull();
+    guardarSesion({ token: "abc", username: "recepcion" });
+    expect(leerSesion()).toEqual({ token: "abc", username: "recepcion" });
+    borrarSesion();
+    expect(leerSesion()).toBeNull();
+    expect(oyente).toHaveBeenCalledTimes(1);
+    quitar();
+    borrarSesion();
+    expect(oyente).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignora una sesión guardada con formato inválido", () => {
+    sessionStorage.setItem("clinica.sesion", "{no-es-json");
+    expect(leerSesion()).toBeNull();
   });
 });
 

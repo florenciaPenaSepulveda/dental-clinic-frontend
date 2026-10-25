@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import Layout from "./Layout";
+import { AuthProvider } from "../hooks/useAuth";
 import Modal from "./Modal";
 import PageHeader from "./PageHeader";
 import { EmptyState, Notice, Spinner } from "./States";
@@ -13,18 +14,21 @@ describe("Layout", () => {
   it("muestra la navegación y el contenido de la ruta", () => {
     render(
       <MemoryRouter initialEntries={["/prueba"]}>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/prueba" element={<p>Contenido</p>} />
-          </Route>
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/prueba" element={<p>Contenido</p>} />
+            </Route>
+          </Routes>
+        </AuthProvider>
       </MemoryRouter>,
     );
     expect(screen.getByText("Contenido")).toBeInTheDocument();
     const nav = screen.getByRole("navigation", { name: "Principal" });
     expect(nav).toHaveTextContent("Reservar hora");
-    expect(nav).toHaveTextContent("Agenda");
-    expect(nav).toHaveTextContent("Pacientes");
+    expect(nav).toHaveTextContent("Ingreso personal");
+    expect(nav).not.toHaveTextContent("Agenda");
+    expect(nav).not.toHaveTextContent("Pacientes");
     expect(screen.getByText(/Agenda y reservas en línea/)).toBeInTheDocument();
   });
 });

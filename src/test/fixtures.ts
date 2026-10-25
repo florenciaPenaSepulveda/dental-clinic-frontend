@@ -1,4 +1,4 @@
-import type { Dentista, Paciente, Reserva, Servicio, Slot } from "../api/types";
+import type { Dentista, Paciente, Reserva, Servicio, Slot, SlotDisponible } from "../api/types";
 
 export const dentista: Dentista = {
   id: 1,
@@ -35,6 +35,12 @@ export const slot = (id: number, hora: string, capacidad = 1, max_overbook = 0):
   hora,
   capacidad,
   max_overbook,
+});
+
+export const disponible = (id: number, hora: string, capacidad = 1, max_overbook = 0, reservas_count = 0, sobrecupos_count = 0): SlotDisponible => ({
+  ...slot(id, hora, capacidad, max_overbook),
+  reservas_count,
+  sobrecupos_count,
 });
 
 export const reserva = (id: number, slotId: number, sobrecupo = false): Reserva => ({

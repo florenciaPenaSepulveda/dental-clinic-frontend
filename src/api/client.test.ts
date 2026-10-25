@@ -1,3 +1,4 @@
+import { borrarSesion, guardarSesion, leerSesion } from "../lib/session";
 import { api, ApiError } from "./client";
 
 const respond = (body: unknown, status = 200) =>
@@ -57,6 +58,36 @@ describe("cliente de la API", () => {
     await expect(api.buscarPaciente("11.111.111-1")).resolves.toBeNull();
     respond({ detail: "El RUT ingresado no es válido." }, 400);
     await expect(api.buscarPaciente("1")).rejects.toThrow("no es válido");
+  });
+
+  it("envía el token de la sesión y no lo envía sin sesión", async () => {
+    const spy = respond([]);
+    await api.pacientes();
+    expect((spy.mock.calls[0][1]?.headers as Record<string, string>).Authorization).toBeUndefined();
+    guardarSesion({ token: "abc123", username: "recepcion" });
+    await api.pacientes();
+    expect((spy.mock.calls[1][1]?.headers as Record<string, string>).Authorization).toBe("Token abc123");
+    borrarSesion();
+  });
+
+  it("cierra la sesión cuando el servidor responde 401", async () => {
+    guardarSesion({ token: "vencido", username: "recepcion" });
+    respond({ detail: "Token inválido." }, 401);
+    await expect(api.pacientes()).rejects.toMatchObject({ status: 401 });
+    expect(leerSesion()).toBeNull();
+  });
+
+  it("no toca la sesión por un 401 sin sesión iniciada", async () => {
+    respond({ detail: "No autenticado." }, 401);
+    await expect(api.pacientes()).rejects.toMatchObject({ status: 401 });
+  });
+
+  it("inicia y cierra sesión", async () => {
+    const spy = respond({ token: "t", username: "recepcion" });
+    await expect(api.login("recepcion", "clave")).resolves.toEqual({ token: "t", username: "recepcion" });
+    expect(spy.mock.calls[0][1]).toMatchObject({ method: "POST", body: JSON.stringify({ username: "recepcion", password: "clave" }) });
+    respond(null, 204);
+    await expect(api.logout()).resolves.toBeUndefined();
   });
 
   it("maneja respuestas sin contenido", async () => {
