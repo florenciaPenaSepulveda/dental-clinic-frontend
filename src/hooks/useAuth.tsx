@@ -6,6 +6,7 @@ interface Auth {
   sesion: Sesion | null;
   iniciarSesion: (username: string, password: string) => Promise<Sesion>;
   activarCuenta: (rut: string, email: string, password: string) => Promise<Sesion>;
+  cambiarClave: (actual: string, nueva: string) => Promise<void>;
   cerrarSesion: () => Promise<void>;
 }
 
@@ -26,6 +27,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const activarCuenta = async (rut: string, email: string, password: string) => abrirSesion(await api.activarCuenta(rut, email, password));
 
+  const cambiarClave = async (actual: string, nueva: string) => {
+    abrirSesion(await api.cambiarClave(actual, nueva));
+  };
+
   const cerrarSesion = async () => {
     try {
       await api.logout();
@@ -34,7 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     borrarSesion();
   };
 
-  return <AuthContext.Provider value={{ sesion, iniciarSesion, activarCuenta, cerrarSesion }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ sesion, iniciarSesion, activarCuenta, cambiarClave, cerrarSesion }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = (): Auth => {

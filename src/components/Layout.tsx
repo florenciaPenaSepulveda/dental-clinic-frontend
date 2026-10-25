@@ -11,9 +11,17 @@ const staffLinks = [
   { to: "/pacientes", label: "Pacientes", end: false },
 ];
 
+const equipoLink = { to: "/equipo", label: "Equipo", end: false };
+
 const pacienteLinks = [{ to: "/mi-historial", label: "Mi historial", end: false }];
 
-const enlacesDe = (rol?: string) => [...publicLinks, ...(rol === "paciente" ? pacienteLinks : rol ? staffLinks : [])];
+const cuentaLink = { to: "/mi-cuenta", label: "Mi cuenta", end: false };
+
+const enlacesDe = (rol?: string) => {
+  if (!rol) return publicLinks;
+  const propios = rol === "paciente" ? pacienteLinks : rol === "recepcion" ? [...staffLinks, equipoLink] : staffLinks;
+  return [...publicLinks, ...propios, cuentaLink];
+};
 
 const baseLink = "rounded-btn px-3 py-2 text-sm font-medium transition-colors";
 const idleLink = "text-primary-content/80 hover:bg-primary-content/10 hover:text-primary-content";
