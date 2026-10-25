@@ -1,0 +1,72 @@
+export interface Region {
+  id: number;
+  nombre: string;
+  codigo: string;
+}
+
+export interface Dentista {
+  id: number;
+  nombre: string;
+  apellido: string;
+  especialidad: string;
+  email: string;
+  telefono: string;
+  region: Region | null;
+  max_overbook_day: number;
+}
+
+export interface Servicio {
+  id: number;
+  nombre: string;
+  duracion_min: number;
+  precio: string;
+}
+
+export interface Paciente {
+  id: number;
+  rut: string;
+  nombre: string;
+  apellido: string;
+  telefono: string;
+  email: string;
+  fecha_registro: string;
+}
+
+export interface PacienteInput {
+  rut: string;
+  nombre: string;
+  apellido: string;
+  telefono: string;
+  email: string;
+}
+
+export interface Slot {
+  id: number;
+  dentista: string;
+  servicio: string | null;
+  fecha: string;
+  hora: string;
+  capacidad: number;
+  max_overbook: number;
+}
+
+export interface Reserva {
+  id: number;
+  slot: Slot;
+  paciente: Paciente;
+  servicio: Servicio | null;
+  creado_en: string;
+  sobrecupo: boolean;
+}
+
+export interface ReservaCreada {
+  id: number;
+  sobrecupo: boolean;
+}
+
+export interface GenerarSlotsInput {
+  fecha: string;
+  desde: string;
+  hasta: string;
+  dias: number;
+}
