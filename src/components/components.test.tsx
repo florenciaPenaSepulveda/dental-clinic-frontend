@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import Layout from "./Layout";
 import { AuthProvider } from "../hooks/useAuth";
+import ErrorBoundary from "./ErrorBoundary";
 import Modal from "./Modal";
 import PageHeader from "./PageHeader";
 import { EmptyState, Notice, Spinner } from "./States";
@@ -30,6 +31,58 @@ describe("Layout", () => {
     expect(nav).not.toHaveTextContent("Agenda");
     expect(nav).not.toHaveTextContent("Pacientes");
     expect(screen.getByText(/Agenda y reservas en línea/)).toBeInTheDocument();
+  });
+});
+
+describe("Accesibilidad y errores", () => {
+  it("ofrece un enlace para saltar al contenido principal", () => {
+    render(
+      <MemoryRouter initialEntries={["/prueba"]}>
+        <AuthProvider>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/prueba" element={<p>Contenido</p>} />
+            </Route>
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("link", { name: "Saltar al contenido" })).toHaveAttribute("href", "#contenido");
+    expect(screen.getByRole("main")).toHaveAttribute("id", "contenido");
+  });
+
+  it("actualiza el título del documento con el de cada página", () => {
+    const { rerender } = render(<PageHeader title="Pacientes" />);
+    expect(document.title).toBe("Pacientes · Clínica Dental");
+    rerender(<PageHeader title="Agenda" />);
+    expect(document.title).toBe("Agenda · Clínica Dental");
+  });
+
+  it("muestra un mensaje en lugar de una pantalla en blanco cuando algo falla", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const recargar = vi.fn();
+    vi.spyOn(window, "location", "get").mockReturnValue({ ...window.location, reload: recargar });
+    const Roto = () => {
+      throw new Error("falla de prueba");
+    };
+    render(
+      <ErrorBoundary>
+        <Roto />
+      </ErrorBoundary>,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent("Algo salió mal");
+    await user.click(screen.getByRole("button", { name: "Recargar la página" }));
+    expect(recargar).toHaveBeenCalled();
+  });
+
+  it("renderiza el contenido cuando no hay errores", () => {
+    render(
+      <ErrorBoundary>
+        <p>Todo bien</p>
+      </ErrorBoundary>,
+    );
+    expect(screen.getByText("Todo bien")).toBeInTheDocument();
   });
 });
 

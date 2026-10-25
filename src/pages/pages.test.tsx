@@ -144,7 +144,9 @@ describe("ReservationPage", () => {
     expect(within(ficha).getByText("+56912345678")).toBeInTheDocument();
     expect(within(ficha).getByText("juan@test.cl")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
-    expect(await screen.findByRole("status")).toHaveTextContent("Reserva confirmada.");
+    const confirmacion = await screen.findByRole("status");
+    expect(confirmacion).toHaveTextContent("Reserva confirmada.");
+    expect(confirmacion).toHaveTextContent(/a las 08:00 con Ana Pérez/);
     expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 1, paciente: 1, servicio: 1 }, []);
     expect(mocked.crearPaciente).not.toHaveBeenCalled();
     expect(mocked.slotsPorFecha).toHaveBeenCalledTimes(2);

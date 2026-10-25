@@ -52,6 +52,16 @@ describe("acceso del personal", () => {
     expect(screen.getByRole("navigation", { name: "Principal" })).not.toHaveTextContent("Pacientes");
   });
 
+  it("avisa que hay que iniciar sesión cuando se llega desde una página protegida", () => {
+    renderApp("/agenda");
+    expect(screen.getByRole("status")).toHaveTextContent("Inicia sesión para continuar.");
+  });
+
+  it("no muestra ese aviso al entrar directamente al ingreso", () => {
+    renderApp("/ingresar");
+    expect(screen.queryByText("Inicia sesión para continuar.")).not.toBeInTheDocument();
+  });
+
   it("inicia sesión, vuelve a la página pedida y muestra las secciones del personal", async () => {
     const user = userEvent.setup();
     mocked.login.mockResolvedValue(sesionDe("recepcion"));
