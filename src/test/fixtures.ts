@@ -1,4 +1,4 @@
-import type { Archivo, Atencion, Dentista, HistorialItem, Paciente, Reserva, Rol, Servicio, Slot, SlotDisponible, SlotSemana } from "../api/types";
+import type { Archivo, Atencion, Dentista, HistorialItem, Paciente, Reserva, Pagina, Rol, Servicio, Slot, SlotDisponible, SlotSemana } from "../api/types";
 import type { Sesion } from "../lib/session";
 
 export const dentista: Dentista = {
@@ -58,6 +58,14 @@ export const reserva = (id: number, slotId: number, sobrecupo = false): Reserva 
   observaciones: "",
   archivos: [],
   atencion: null,
+});
+
+export const pagina = <T>(results: T[], extra: Partial<Pagina<T>> = {}): Pagina<T> => ({
+  count: results.length,
+  next: null,
+  previous: null,
+  results,
+  ...extra,
 });
 
 export const archivo = (id = 1, nombre = "examen.pdf"): Archivo => ({ id, nombre, tipo: "application/pdf", tamano: 2048, subido_en: "2026-10-24T10:00:00Z" });

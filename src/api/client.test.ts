@@ -20,18 +20,18 @@ describe("cliente de la API", () => {
     ]);
   });
 
-  it("construye los filtros de horarios y reservas", async () => {
+  it("construye los filtros de horarios y pacientes", async () => {
     const spy = respond([]);
     await api.slotsPorFecha("2026-10-25", 3);
     await api.slotsPorFecha("2026-10-25");
-    await api.reservas({ fecha: "2026-10-25", dentista: 3 });
-    await api.reservas();
+    await api.pacientes({ q: "juan soto", page: 2 });
+    await api.pacientes();
     const urls = spy.mock.calls.map(([url]) => String(url).replace(/^.*\/agenda/, ""));
     expect(urls).toEqual([
       "/slots_por_fecha/?fecha=2026-10-25&dentista_id=3",
       "/slots_por_fecha/?fecha=2026-10-25",
-      "/api/reservas/?fecha=2026-10-25&dentista=3",
-      "/api/reservas/",
+      "/api/pacientes/?q=juan+soto&page=2",
+      "/api/pacientes/",
     ]);
   });
 
@@ -107,6 +107,7 @@ describe("cliente de la API", () => {
     respond({ paciente: {}, proximas: [], historial: [] });
     await expect(api.miHistorial()).resolves.toMatchObject({ proximas: [] });
     const activar = respond(sesionDe("paciente"));
+    activar.mockClear();
     await api.activarCuenta("12.345.678-5", "j@test.cl", "clave");
     expect(String(activar.mock.calls[0][0])).toContain("/auth/activar-cuenta/");
     respond(null, 204);

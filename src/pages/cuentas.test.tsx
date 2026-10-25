@@ -6,7 +6,7 @@ import Layout from "../components/Layout";
 import RequireRol from "../components/RequireRol";
 import { AuthProvider } from "../hooks/useAuth";
 import { guardarSesion, leerSesion } from "../lib/session";
-import { dentista, dentistaSinEspecialidad, paciente, pacienteSinContacto, sesionDe } from "../test/fixtures";
+import { dentista, dentistaSinEspecialidad, paciente, pagina, pacienteSinContacto, sesionDe } from "../test/fixtures";
 import EquipoPage from "./EquipoPage";
 import LoginPage from "./LoginPage";
 import MiCuentaPage from "./MiCuentaPage";
@@ -57,7 +57,7 @@ beforeEach(() => {
   sessionStorage.clear();
   guardarSesion(sesionDe("recepcion"));
   mocked.dentistas.mockResolvedValue([dentista, { ...dentistaSinEspecialidad, tiene_cuenta: false }]);
-  mocked.pacientes.mockResolvedValue([paciente, pacienteSinContacto]);
+  mocked.pacientes.mockResolvedValue(pagina([paciente, pacienteSinContacto]));
 });
 
 describe("Equipo", () => {
@@ -196,7 +196,7 @@ describe("Cuentas de pacientes", () => {
   });
 
   it("indica restablecer cuando el paciente ya tiene cuenta", async () => {
-    mocked.pacientes.mockResolvedValue([{ ...paciente, tiene_cuenta: true }]);
+    mocked.pacientes.mockResolvedValue(pagina([{ ...paciente, tiene_cuenta: true }]));
     renderRutas("/pacientes");
     expect(await screen.findByRole("button", { name: "Restablecer acceso" })).toBeInTheDocument();
   });

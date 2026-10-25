@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { api } from "../api/client";
 import { AuthProvider } from "../hooks/useAuth";
 import { guardarSesion } from "../lib/session";
-import { dentista, dentistaSinEspecialidad, disponible, historialItem, paciente, pacienteSinContacto, sesionDe, servicio } from "../test/fixtures";
+import { dentista, dentistaSinEspecialidad, disponible, historialItem, paciente, pagina, pacienteSinContacto, sesionDe, servicio } from "../test/fixtures";
 import HomePage from "./HomePage";
 import PatientsPage from "./PatientsPage";
 import ReservationPage from "./ReservationPage";
@@ -20,7 +20,6 @@ vi.mock("../api/client", () => ({
     actualizarPaciente: vi.fn(),
     eliminarPaciente: vi.fn(),
     slotsPorFecha: vi.fn(),
-    reservas: vi.fn(),
     crearReserva: vi.fn(),
     cancelarReserva: vi.fn(),
     generarSlots: vi.fn(),
@@ -41,9 +40,8 @@ beforeEach(() => {
   guardarSesion(sesionDe("recepcion"));
   mocked.dentistas.mockResolvedValue([dentista, dentistaSinEspecialidad]);
   mocked.servicios.mockResolvedValue([servicio]);
-  mocked.pacientes.mockResolvedValue([paciente, pacienteSinContacto]);
+  mocked.pacientes.mockResolvedValue(pagina([paciente, pacienteSinContacto]));
   mocked.slotsPorFecha.mockResolvedValue([disponible(1, "08:00:00"), disponible(2, "08:30:00"), disponible(3, "09:00:00", 1, 1), disponible(4, "09:30:00")]);
-  mocked.reservas.mockResolvedValue([]);
 });
 
 describe("HomePage", () => {
@@ -111,7 +109,6 @@ describe("ReservationPage", () => {
     expect(screen.getByRole("button", { name: "08:30" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "09:00" })).toBeDisabled();
     expect(mocked.slotsPorFecha).toHaveBeenCalledWith(expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), 1);
-    expect(mocked.reservas).not.toHaveBeenCalled();
   });
 
   it("permite reservar en sobrecupo cuando el horario está lleno pero admite más", async () => {
@@ -387,17 +384,56 @@ describe("PatientsPage", () => {
     return screen.getByRole("heading", { name: "Nuevo paciente", hidden: true }).closest("dialog") as HTMLElement;
   };
 
-  it("lista y filtra pacientes", async () => {
+  it("lista los pacientes y busca en el servidor", async () => {
     const user = userEvent.setup();
     renderPage(<PatientsPage />);
     expect(await screen.findByText("Juan Soto")).toBeInTheDocument();
     expect(screen.getByText("Marta Ríos")).toBeInTheDocument();
     expect(screen.getAllByText("-").length).toBeGreaterThanOrEqual(2);
+    expect(mocked.pacientes).toHaveBeenLastCalledWith({ q: "", page: 1 });
+    expect(screen.getByText("Mostrando 1–2 de 2")).toBeInTheDocument();
+    mocked.pacientes.mockResolvedValue(pagina([pacienteSinContacto]));
     await user.type(screen.getByPlaceholderText(/Buscar/), "marta");
+    await waitFor(() => expect(mocked.pacientes).toHaveBeenLastCalledWith({ q: "marta", page: 1 }));
+    expect(await screen.findByText("Marta Ríos")).toBeInTheDocument();
     expect(screen.queryByText("Juan Soto")).not.toBeInTheDocument();
+    mocked.pacientes.mockResolvedValue(pagina([]));
     await user.clear(screen.getByPlaceholderText(/Buscar/));
     await user.type(screen.getByPlaceholderText(/Buscar/), "zzz");
-    expect(screen.getByText("Sin resultados")).toBeInTheDocument();
+    expect(await screen.findByText("Sin resultados")).toBeInTheDocument();
+  });
+
+  it("navega entre las páginas de pacientes", async () => {
+    const user = userEvent.setup();
+    mocked.pacientes
+      .mockResolvedValueOnce(pagina([paciente], { count: 30, next: "siguiente" }))
+      .mockResolvedValueOnce(pagina([pacienteSinContacto], { count: 30, previous: "anterior" }))
+      .mockResolvedValue(pagina([paciente], { count: 30, next: "siguiente" }));
+    renderPage(<PatientsPage />);
+    expect(await screen.findByText("Mostrando 1–1 de 30")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Anterior" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Siguiente" }));
+    expect(await screen.findByText("Mostrando 26–26 de 30")).toBeInTheDocument();
+    expect(mocked.pacientes).toHaveBeenLastCalledWith({ q: "", page: 2 });
+    expect(screen.getByRole("button", { name: "Siguiente" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Anterior" }));
+    await waitFor(() => expect(mocked.pacientes).toHaveBeenLastCalledWith({ q: "", page: 1 }));
+  });
+
+  it("vuelve a la página anterior al eliminar al único paciente de la última página", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    mocked.eliminarPaciente.mockResolvedValue(undefined);
+    mocked.pacientes
+      .mockResolvedValueOnce(pagina([paciente], { count: 26, next: "siguiente" }))
+      .mockResolvedValueOnce(pagina([pacienteSinContacto], { count: 26, previous: "anterior" }))
+      .mockResolvedValue(pagina([paciente], { count: 25 }));
+    renderPage(<PatientsPage />);
+    await user.click(await screen.findByRole("button", { name: "Siguiente" }));
+    await screen.findByText("Marta Ríos");
+    await user.click(screen.getByRole("button", { name: "Eliminar" }));
+    expect(await screen.findByText("Paciente eliminado.")).toBeInTheDocument();
+    await waitFor(() => expect(mocked.pacientes).toHaveBeenLastCalledWith({ q: "", page: 1 }));
   });
 
   it("registra un paciente nuevo", async () => {
