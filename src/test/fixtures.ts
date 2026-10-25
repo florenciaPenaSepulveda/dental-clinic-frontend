@@ -10,6 +10,7 @@ export const dentista: Dentista = {
   telefono: "",
   region: { id: 1, nombre: "Biobío", codigo: "08" },
   max_overbook_day: 1,
+  tiene_cuenta: true,
 };
 
 export const dentistaSinEspecialidad: Dentista = { ...dentista, id: 2, nombre: "Luis", apellido: "Rojas", especialidad: "", region: null };
@@ -24,6 +25,7 @@ export const paciente: Paciente = {
   telefono: "+56912345678",
   email: "juan@test.cl",
   fecha_registro: "2026-10-20T10:00:00Z",
+  tiene_cuenta: false,
 };
 
 export const pacienteSinContacto: Paciente = { ...paciente, id: 2, rut: "11.111.111-1", nombre: "Marta", apellido: "Ríos", telefono: "", email: "" };
