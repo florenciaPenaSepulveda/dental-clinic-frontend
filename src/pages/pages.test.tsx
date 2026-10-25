@@ -2,8 +2,9 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { api } from "../api/client";
-import { dentista, dentistaSinEspecialidad, disponible, paciente, pacienteSinContacto, reserva, servicio } from "../test/fixtures";
-import AppointmentsPage from "./AppointmentsPage";
+import { AuthProvider } from "../hooks/useAuth";
+import { guardarSesion } from "../lib/session";
+import { dentista, dentistaSinEspecialidad, disponible, historialItem, paciente, pacienteSinContacto, sesionDe, servicio } from "../test/fixtures";
 import HomePage from "./HomePage";
 import PatientsPage from "./PatientsPage";
 import ReservationPage from "./ReservationPage";
@@ -14,6 +15,7 @@ vi.mock("../api/client", () => ({
     servicios: vi.fn(),
     pacientes: vi.fn(),
     buscarPaciente: vi.fn(),
+    historialPaciente: vi.fn(),
     crearPaciente: vi.fn(),
     actualizarPaciente: vi.fn(),
     eliminarPaciente: vi.fn(),
@@ -27,9 +29,16 @@ vi.mock("../api/client", () => ({
 
 const mocked = vi.mocked(api);
 
-const renderPage = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>);
+const renderPage = (ui: React.ReactElement) =>
+  render(
+    <MemoryRouter>
+      <AuthProvider>{ui}</AuthProvider>
+    </MemoryRouter>,
+  );
 
 beforeEach(() => {
+  sessionStorage.clear();
+  guardarSesion(sesionDe("recepcion"));
   mocked.dentistas.mockResolvedValue([dentista, dentistaSinEspecialidad]);
   mocked.servicios.mockResolvedValue([servicio]);
   mocked.pacientes.mockResolvedValue([paciente, pacienteSinContacto]);
@@ -117,7 +126,7 @@ describe("ReservationPage", () => {
     await screen.findByText("Paciente registrado");
     await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
     expect(await screen.findByRole("status")).toHaveTextContent(/sobrecupo/i);
-    expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 3, paciente: 1 });
+    expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 3, paciente: 1 }, []);
   });
 
   it("encuentra al paciente por RUT, muestra sus datos y reserva con un servicio", async () => {
@@ -136,7 +145,7 @@ describe("ReservationPage", () => {
     expect(within(ficha).getByText("juan@test.cl")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
     expect(await screen.findByRole("status")).toHaveTextContent("Reserva confirmada.");
-    expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 1, paciente: 1, servicio: 1 });
+    expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 1, paciente: 1, servicio: 1 }, []);
     expect(mocked.crearPaciente).not.toHaveBeenCalled();
     expect(mocked.slotsPorFecha).toHaveBeenCalledTimes(2);
     expect(screen.getByLabelText("RUT del paciente")).toHaveValue("");
@@ -177,7 +186,7 @@ describe("ReservationPage", () => {
     await user.type(screen.getByLabelText("Teléfono"), "999");
     await user.type(screen.getByLabelText("Correo electrónico"), "j@test.cl");
     await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
-    await waitFor(() => expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 1, paciente: 7 }));
+    await waitFor(() => expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 1, paciente: 7 }, []));
     expect(mocked.crearPaciente).toHaveBeenCalledWith({
       rut: "12.345.678-5",
       nombre: "Juan",
@@ -227,6 +236,35 @@ describe("ReservationPage", () => {
     await screen.findByText("Paciente registrado");
     await user.type(screen.getByLabelText("RUT del paciente"), "{Backspace}");
     expect(screen.queryByText("Paciente registrado")).not.toBeInTheDocument();
+  });
+
+  it("envía el motivo y los exámenes adjuntos con la reserva", async () => {
+    const user = userEvent.setup();
+    mocked.buscarPaciente.mockResolvedValue(paciente);
+    mocked.crearReserva.mockResolvedValue({ id: 9, sobrecupo: false });
+    renderPage(<ReservationPage />);
+    await elegirDentista(user);
+    await user.click(screen.getByRole("button", { name: "08:00" }));
+    await buscarRut(user, "123456785");
+    await screen.findByText("Paciente registrado");
+    await user.type(screen.getByLabelText("Motivo de la consulta (opcional)"), "Dolor de muela");
+    const examen = new File(["%PDF-1.4"], "examen.pdf", { type: "application/pdf" });
+    await user.upload(screen.getByLabelText("Exámenes o documentos (opcional)"), examen);
+    expect(screen.getByText(/examen\.pdf/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Reserva confirmada.");
+    expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 1, paciente: 1, motivo: "Dolor de muela" }, [examen]);
+    expect(screen.queryByText(/examen\.pdf/)).not.toBeInTheDocument();
+  });
+
+  it("rechaza exámenes con un formato no permitido", async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    renderPage(<ReservationPage />);
+    await screen.findAllByRole("option", { name: /Ana Pérez/ });
+    await user.upload(screen.getByLabelText("Exámenes o documentos (opcional)"), new File(["x"], "virus.exe"));
+    expect(screen.getByText("Solo se aceptan archivos PDF, JPG o PNG.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Quitar virus.exe" }));
+    expect(screen.queryByText("Solo se aceptan archivos PDF, JPG o PNG.")).not.toBeInTheDocument();
   });
 
   it("valida los datos antes de enviar", async () => {
@@ -308,77 +346,35 @@ describe("ReservationPage", () => {
   });
 });
 
-describe("AppointmentsPage", () => {
-  it("lista las reservas y filtra por dentista", async () => {
+describe("PatientsPage por rol", () => {
+  it("muestra el historial del paciente a recepción", async () => {
     const user = userEvent.setup();
-    mocked.reservas.mockResolvedValue([reserva(1, 1), reserva(2, 2, true)]);
-    renderPage(<AppointmentsPage />);
-    expect(await screen.findAllByText("Juan Soto")).toHaveLength(2);
-    expect(screen.getByText("Limpieza")).toBeInTheDocument();
-    expect(screen.getByText("Sobrecupo")).toBeInTheDocument();
-    expect(screen.getByText("Normal")).toBeInTheDocument();
-    await user.selectOptions(screen.getAllByRole("combobox")[0], "1");
-    await waitFor(() => expect(mocked.reservas).toHaveBeenLastCalledWith({ fecha: expect.any(String), dentista: 1 }));
+    mocked.historialPaciente.mockResolvedValue([historialItem(1)]);
+    renderPage(<PatientsPage />);
+    await user.click((await screen.findAllByRole("button", { name: "Historial" }))[0]);
+    expect(await screen.findByText("Caries oclusal")).toBeInTheDocument();
+    expect(mocked.historialPaciente).toHaveBeenCalledWith(1);
   });
 
-  it("cambia la fecha consultada", async () => {
-    renderPage(<AppointmentsPage />);
-    await screen.findByText("No hay reservas para este día");
-    fireEvent.change(screen.getAllByDisplayValue(/\d{4}-\d{2}-\d{2}/)[0], { target: { value: "2030-01-02" } });
-    await waitFor(() => expect(mocked.reservas).toHaveBeenLastCalledWith({ fecha: "2030-01-02", dentista: undefined }));
+  it("al dentista le oculta crear, editar y eliminar pacientes", async () => {
+    guardarSesion(sesionDe("dentista"));
+    renderPage(<PatientsPage />);
+    expect(await screen.findAllByRole("button", { name: "Historial" })).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: "Nuevo paciente" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Editar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Eliminar" })).not.toBeInTheDocument();
+    expect(screen.getByText("Pacientes que se atienden contigo")).toBeInTheDocument();
   });
 
-  it("cancela una reserva tras confirmar", async () => {
+  it("informa cuando el historial no tiene atenciones o falla", async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    mocked.reservas.mockResolvedValue([reserva(1, 1)]);
-    mocked.cancelarReserva.mockResolvedValue(undefined);
-    renderPage(<AppointmentsPage />);
-    await user.click(await screen.findByRole("button", { name: "Cancelar" }));
-    expect(await screen.findByRole("status")).toHaveTextContent("Reserva cancelada.");
-    expect(mocked.cancelarReserva).toHaveBeenCalledWith(1);
-  });
-
-  it("respeta la cancelación del diálogo y muestra errores", async () => {
-    const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValueOnce(false);
-    mocked.reservas.mockResolvedValue([reserva(1, 1)]);
-    mocked.cancelarReserva.mockRejectedValue(new Error("No se pudo"));
-    renderPage(<AppointmentsPage />);
-    await user.click(await screen.findByRole("button", { name: "Cancelar" }));
-    expect(mocked.cancelarReserva).not.toHaveBeenCalled();
-    confirmSpy.mockReturnValue(true);
-    await user.click(screen.getByRole("button", { name: "Cancelar" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("No se pudo");
-  });
-
-  it("genera horarios para un dentista", async () => {
-    const user = userEvent.setup();
-    mocked.generarSlots.mockResolvedValue({ created: 17 });
-    renderPage(<AppointmentsPage />);
-    await screen.findByText("No hay reservas para este día");
-    await user.click(screen.getByRole("button", { name: "Generar horarios" }));
-    expect(screen.getByText("Elige un dentista.")).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText("Dentista para generar horarios"), "1");
-    await user.click(screen.getByRole("button", { name: "Generar horarios" }));
-    expect(await screen.findByText("Se prepararon 17 horarios.")).toBeInTheDocument();
-    expect(mocked.generarSlots).toHaveBeenCalledWith(1, expect.objectContaining({ desde: "08:00", hasta: "16:00", dias: 1 }));
-  });
-
-  it("informa errores al generar horarios y al cargar reservas", async () => {
-    const user = userEvent.setup();
-    mocked.generarSlots.mockRejectedValue(new Error("Fecha inválida"));
-    renderPage(<AppointmentsPage />);
-    await screen.findByText("No hay reservas para este día");
-    await user.selectOptions(screen.getByLabelText("Dentista para generar horarios"), "1");
-    await user.click(screen.getByRole("button", { name: "Generar horarios" }));
-    expect(await screen.findByText("Fecha inválida")).toBeInTheDocument();
-  });
-
-  it("informa cuando falla la carga de reservas", async () => {
-    mocked.reservas.mockRejectedValue(new Error("Sin conexión"));
-    renderPage(<AppointmentsPage />);
-    expect(await screen.findByText("Sin conexión")).toBeInTheDocument();
+    mocked.historialPaciente.mockResolvedValueOnce([]).mockRejectedValueOnce(new Error("Sin permiso"));
+    renderPage(<PatientsPage />);
+    const botones = await screen.findAllByRole("button", { name: "Historial" });
+    await user.click(botones[0]);
+    expect(await screen.findByText("Sin atenciones registradas")).toBeInTheDocument();
+    await user.click(botones[1]);
+    expect(await screen.findByText("Sin permiso")).toBeInTheDocument();
   });
 });
 
@@ -386,7 +382,7 @@ describe("PatientsPage", () => {
   const abrirNuevo = async (user: ReturnType<typeof userEvent.setup>) => {
     await screen.findByText("Juan Soto");
     await user.click(screen.getByRole("button", { name: "Nuevo paciente" }));
-    return screen.getByRole("dialog", { hidden: true });
+    return screen.getByRole("heading", { name: "Nuevo paciente", hidden: true }).closest("dialog") as HTMLElement;
   };
 
   it("lista y filtra pacientes", async () => {
@@ -445,7 +441,7 @@ describe("PatientsPage", () => {
     renderPage(<PatientsPage />);
     await screen.findByText("Juan Soto");
     await user.click(screen.getAllByRole("button", { name: "Editar" })[0]);
-    const dialog = screen.getByRole("dialog", { hidden: true });
+    const dialog = screen.getByRole("heading", { name: "Editar paciente", hidden: true }).closest("dialog") as HTMLElement;
     const nombre = within(dialog).getByLabelText("Nombre");
     await user.clear(nombre);
     await user.type(nombre, "Juanito");

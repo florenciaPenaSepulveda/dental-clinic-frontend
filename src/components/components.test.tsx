@@ -26,7 +26,7 @@ describe("Layout", () => {
     expect(screen.getByText("Contenido")).toBeInTheDocument();
     const nav = screen.getByRole("navigation", { name: "Principal" });
     expect(nav).toHaveTextContent("Reservar hora");
-    expect(nav).toHaveTextContent("Ingreso personal");
+    expect(nav).toHaveTextContent("Ingresar");
     expect(nav).not.toHaveTextContent("Agenda");
     expect(nav).not.toHaveTextContent("Pacientes");
     expect(screen.getByText(/Agenda y reservas en línea/)).toBeInTheDocument();

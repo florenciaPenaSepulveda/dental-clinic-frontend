@@ -1,4 +1,5 @@
 import { borrarSesion, guardarSesion, leerSesion } from "../lib/session";
+import { sesionDe } from "../test/fixtures";
 import { api, ApiError } from "./client";
 
 const respond = (body: unknown, status = 200) =>
@@ -64,14 +65,14 @@ describe("cliente de la API", () => {
     const spy = respond([]);
     await api.pacientes();
     expect((spy.mock.calls[0][1]?.headers as Record<string, string>).Authorization).toBeUndefined();
-    guardarSesion({ token: "abc123", username: "recepcion" });
+    guardarSesion({ ...sesionDe("recepcion"), token: "abc123" });
     await api.pacientes();
     expect((spy.mock.calls[1][1]?.headers as Record<string, string>).Authorization).toBe("Token abc123");
     borrarSesion();
   });
 
   it("cierra la sesión cuando el servidor responde 401", async () => {
-    guardarSesion({ token: "vencido", username: "recepcion" });
+    guardarSesion({ ...sesionDe("recepcion"), token: "vencido" });
     respond({ detail: "Token inválido." }, 401);
     await expect(api.pacientes()).rejects.toMatchObject({ status: 401 });
     expect(leerSesion()).toBeNull();
@@ -83,11 +84,65 @@ describe("cliente de la API", () => {
   });
 
   it("inicia y cierra sesión", async () => {
-    const spy = respond({ token: "t", username: "recepcion" });
-    await expect(api.login("recepcion", "clave")).resolves.toEqual({ token: "t", username: "recepcion" });
+    const spy = respond(sesionDe("recepcion"));
+    await expect(api.login("recepcion", "clave")).resolves.toEqual(sesionDe("recepcion"));
     expect(spy.mock.calls[0][1]).toMatchObject({ method: "POST", body: JSON.stringify({ username: "recepcion", password: "clave" }) });
     respond(null, 204);
     await expect(api.logout()).resolves.toBeUndefined();
+  });
+
+  it("consulta la semana, el historial y las operaciones de la reserva", async () => {
+    const spy = respond([]);
+    await api.semana("2026-10-26", 3);
+    expect(String(spy.mock.calls[0][0])).toContain("/semana/?desde=2026-10-26&dentista=3");
+    await api.semana("2026-10-26");
+    expect(String(spy.mock.calls[1][0])).not.toContain("dentista");
+    await api.historialPaciente(4);
+    expect(String(spy.mock.calls[2][0])).toContain("/api/pacientes/4/historial/");
+    await api.actualizarReserva(5, { estado: "atendida" });
+    expect(spy.mock.calls[3][1]).toMatchObject({ method: "PATCH", body: JSON.stringify({ estado: "atendida" }) });
+    await api.guardarAtencion(5, { diagnostico: "a", procedimiento: "b", indicaciones: "c" });
+    expect(String(spy.mock.calls[4][0])).toContain("/api/reservas/5/atencion/");
+    expect(spy.mock.calls[4][1]).toMatchObject({ method: "PUT" });
+    respond({ paciente: {}, proximas: [], historial: [] });
+    await expect(api.miHistorial()).resolves.toMatchObject({ proximas: [] });
+    const activar = respond(sesionDe("paciente"));
+    await api.activarCuenta("12.345.678-5", "j@test.cl", "clave");
+    expect(String(activar.mock.calls[0][0])).toContain("/auth/activar-cuenta/");
+    respond(null, 204);
+    await expect(api.eliminarArchivo(7)).resolves.toBeUndefined();
+  });
+
+  it("envía los archivos como formulario sin fijar el tipo de contenido", async () => {
+    const archivo = new File(["%PDF"], "examen.pdf", { type: "application/pdf" });
+    const spy = respond({ id: 1, sobrecupo: false });
+    await api.crearReserva({ slot: 3, paciente: 4, motivo: "Dolor" }, [archivo]);
+    const [, init] = spy.mock.calls[0];
+    expect(init?.body).toBeInstanceOf(FormData);
+    expect((init?.body as FormData).get("slot")).toBe("3");
+    expect((init?.body as FormData).get("motivo")).toBe("Dolor");
+    expect((init?.body as FormData).getAll("archivos")).toHaveLength(1);
+    expect(init?.headers as Record<string, string>).not.toHaveProperty("Content-Type");
+    const subida = respond([{ id: 2 }], 201);
+    await api.subirArchivos(8, [archivo]);
+    expect(subida.mock.calls[0][1]?.body).toBeInstanceOf(FormData);
+  });
+
+  it("descarga archivos con el token y traduce los errores", async () => {
+    guardarSesion({ ...sesionDe("recepcion"), token: "abc" });
+    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("%PDF", { status: 200 }));
+    await expect(api.archivo(3)).resolves.toBeInstanceOf(Blob);
+    expect((spy.mock.calls[0][1]?.headers as Record<string, string>).Authorization).toBe("Token abc");
+    spy.mockResolvedValue(new Response(JSON.stringify({ detail: "No encontrado." }), { status: 404 }));
+    await expect(api.archivo(3)).rejects.toMatchObject({ status: 404, message: "No encontrado." });
+    spy.mockResolvedValue(new Response("{}", { status: 401 }));
+    await expect(api.archivo(3)).rejects.toMatchObject({ status: 401 });
+    expect(leerSesion()).toBeNull();
+    spy.mockRejectedValue(new TypeError("fallo"));
+    await expect(api.archivo(3)).rejects.toThrow(/No se pudo conectar/);
+    spy.mockResolvedValue(new Response("%PDF", { status: 200 }));
+    await expect(api.archivo(3)).resolves.toBeInstanceOf(Blob);
+    expect((spy.mock.calls[spy.mock.calls.length - 1][1]?.headers as Record<string, string>).Authorization).toBeUndefined();
   });
 
   it("maneja respuestas sin contenido", async () => {
