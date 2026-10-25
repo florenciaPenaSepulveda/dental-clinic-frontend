@@ -50,6 +50,11 @@ export interface Slot {
   max_overbook: number;
 }
 
+export interface SlotDisponible extends Slot {
+  reservas_count: number;
+  sobrecupos_count: number;
+}
+
 export interface Reserva {
   id: number;
   slot: Slot;
