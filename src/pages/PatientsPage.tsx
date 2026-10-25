@@ -1,9 +1,11 @@
 import { FormEvent, useMemo, useState } from "react";
 import { api } from "../api/client";
 import type { Paciente, PacienteInput } from "../api/types";
+import HistorialPacienteModal from "../components/HistorialPacienteModal";
 import Modal from "../components/Modal";
 import PageHeader from "../components/PageHeader";
 import { EmptyState, Notice, Spinner } from "../components/States";
+import { useAuth } from "../hooks/useAuth";
 import { useLoad } from "../hooks/useLoad";
 import { nombreCompleto } from "../lib/format";
 import { formatRut, isValidRut } from "../lib/rut";
@@ -13,6 +15,9 @@ const vacio: PacienteInput = { rut: "", nombre: "", apellido: "", telefono: "", 
 type Aviso = { tone: "success" | "error"; text: string } | null;
 
 const PatientsPage = () => {
+  const { sesion } = useAuth();
+  const puedeEditar = sesion?.rol === "recepcion";
+  const [historialDe, setHistorialDe] = useState<Paciente | null>(null);
   const [busqueda, setBusqueda] = useState("");
   const [abierto, setAbierto] = useState(false);
   const [editando, setEditando] = useState<Paciente | null>(null);
@@ -92,11 +97,13 @@ const PatientsPage = () => {
     <>
       <PageHeader
         title="Pacientes"
-        subtitle="Registro de pacientes de la clínica"
+        subtitle={puedeEditar ? "Registro de pacientes de la clínica" : "Pacientes que se atienden contigo"}
         actions={
-          <button className="btn btn-primary btn-sm" onClick={abrirNuevo}>
-            Nuevo paciente
-          </button>
+          puedeEditar && (
+            <button className="btn btn-primary btn-sm" onClick={abrirNuevo}>
+              Nuevo paciente
+            </button>
+          )
         }
       />
 
@@ -138,12 +145,19 @@ const PatientsPage = () => {
                     <td>{paciente.telefono || "-"}</td>
                     <td>{paciente.email || "-"}</td>
                     <td className="whitespace-nowrap text-right">
-                      <button className="btn btn-ghost btn-xs" onClick={() => abrirEdicion(paciente)}>
-                        Editar
+                      <button className="btn btn-ghost btn-xs" onClick={() => setHistorialDe(paciente)}>
+                        Historial
                       </button>
-                      <button className="btn btn-ghost btn-xs text-error" onClick={() => eliminar(paciente)}>
-                        Eliminar
-                      </button>
+                      {puedeEditar && (
+                        <>
+                          <button className="btn btn-ghost btn-xs" onClick={() => abrirEdicion(paciente)}>
+                            Editar
+                          </button>
+                          <button className="btn btn-ghost btn-xs text-error" onClick={() => eliminar(paciente)}>
+                            Eliminar
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -204,6 +218,7 @@ const PatientsPage = () => {
           </div>
         </form>
       </Modal>
+      <HistorialPacienteModal paciente={historialDe} onClose={() => setHistorialDe(null)} />
     </>
   );
 };
