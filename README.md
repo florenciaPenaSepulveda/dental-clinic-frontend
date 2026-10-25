@@ -25,7 +25,7 @@ Interfaz web de una clínica dental para reservar horas, ver la agenda del día 
 
   ```
   python manage.py migrate
-  python manage.py seed_data --generate-slots 7
+  python manage.py seed_data --demo
   python manage.py runserver
   ```
 
