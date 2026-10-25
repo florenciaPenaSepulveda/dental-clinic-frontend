@@ -80,6 +80,13 @@ describe("ReservationPage", () => {
     expect(await screen.findByText("Elige un dentista para ver sus horarios.")).toBeInTheDocument();
   });
 
+  it("muestra el valor referencial de cada servicio sin cobrar en línea", async () => {
+    renderPage(<ReservationPage />);
+    const opcion = await screen.findByRole("option", { name: /Limpieza/ });
+    expect(opcion).toHaveTextContent(/25\.000/);
+    expect(screen.getByText(/el pago se realiza en la consulta/)).toBeInTheDocument();
+  });
+
   it("no descarga la lista de pacientes", async () => {
     renderPage(<ReservationPage />);
     await screen.findByRole("option", { name: /Ana Pérez/ });
