@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
-import type { Paciente, PacienteInput, Reserva, Slot } from "../api/types";
+import type { Paciente, PacienteInput, SlotDisponible } from "../api/types";
 import PageHeader from "../components/PageHeader";
 import { EmptyState, Notice, Spinner } from "../components/States";
 import { useLoad } from "../hooks/useLoad";
@@ -10,14 +10,12 @@ import { formatRut, isValidRut } from "../lib/rut";
 
 type Estado = "disponible" | "sobrecupo" | "lleno";
 
-const estadoDelSlot = (slot: Slot, reservas: Reserva[]): { estado: Estado; cupos: number } => {
-  const delSlot = reservas.filter((reserva) => reserva.slot.id === slot.id);
-  const sobrecupos = delSlot.filter((reserva) => reserva.sobrecupo).length;
-  if (delSlot.length < slot.capacidad) {
-    return { estado: "disponible", cupos: slot.capacidad - delSlot.length };
+const estadoDelSlot = (slot: SlotDisponible): { estado: Estado; cupos: number } => {
+  if (slot.reservas_count < slot.capacidad) {
+    return { estado: "disponible", cupos: slot.capacidad - slot.reservas_count };
   }
-  if (sobrecupos < slot.max_overbook) {
-    return { estado: "sobrecupo", cupos: slot.max_overbook - sobrecupos };
+  if (slot.sobrecupos_count < slot.max_overbook) {
+    return { estado: "sobrecupo", cupos: slot.max_overbook - slot.sobrecupos_count };
   }
   return { estado: "lleno", cupos: 0 };
 };
@@ -48,15 +46,12 @@ const ReservationPage = () => {
 
   const catalogos = useLoad(() => Promise.all([api.dentistas(), api.servicios()]), []);
   const agenda = useLoad(
-    () =>
-      dentistaId
-        ? Promise.all([api.slotsPorFecha(fecha, Number(dentistaId)), api.reservas({ fecha, dentista: Number(dentistaId) })])
-        : Promise.resolve([[], []] as [Slot[], Reserva[]]),
+    () => (dentistaId ? api.slotsPorFecha(fecha, Number(dentistaId)) : Promise.resolve([] as SlotDisponible[])),
     [dentistaId, fecha],
   );
 
   const [dentistas, servicios] = catalogos.data ?? [[], []];
-  const [slots, reservas] = agenda.data ?? [[], []];
+  const slots = agenda.data ?? [];
 
   const elegirDentista = (valor: string) => {
     setDentistaId(valor);
@@ -214,7 +209,7 @@ const ReservationPage = () => {
               <>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
                   {slots.map((slot) => {
-                    const { estado, cupos } = estadoDelSlot(slot, reservas);
+                    const { estado, cupos } = estadoDelSlot(slot);
                     const seleccionado = slotId === slot.id;
                     return (
                       <button
