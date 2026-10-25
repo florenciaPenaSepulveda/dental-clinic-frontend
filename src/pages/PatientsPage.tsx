@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { api } from "../api/client";
 import type { Paciente, PacienteInput } from "../api/types";
 import CuentaModal from "../components/CuentaModal";
@@ -11,6 +11,8 @@ import { useLoad } from "../hooks/useLoad";
 import { nombreCompleto } from "../lib/format";
 import { formatRut, isValidRut } from "../lib/rut";
 
+const TAMANO_PAGINA = 25;
+
 const vacio: PacienteInput = { rut: "", nombre: "", apellido: "", telefono: "", email: "" };
 
 type Aviso = { tone: "success" | "error"; text: string } | null;
@@ -21,6 +23,8 @@ const PatientsPage = () => {
   const [historialDe, setHistorialDe] = useState<Paciente | null>(null);
   const [cuentaDe, setCuentaDe] = useState<Paciente | null>(null);
   const [busqueda, setBusqueda] = useState("");
+  const [termino, setTermino] = useState("");
+  const [pagina, setPagina] = useState(1);
   const [abierto, setAbierto] = useState(false);
   const [editando, setEditando] = useState<Paciente | null>(null);
   const [form, setForm] = useState<PacienteInput>(vacio);
@@ -28,14 +32,19 @@ const PatientsPage = () => {
   const [guardando, setGuardando] = useState(false);
   const [aviso, setAviso] = useState<Aviso>(null);
 
-  const pacientes = useLoad(() => api.pacientes(), []);
+  useEffect(() => {
+    const espera = setTimeout(() => {
+      setTermino(busqueda.trim());
+      setPagina(1);
+    }, 300);
+    return () => clearTimeout(espera);
+  }, [busqueda]);
 
-  const visibles = useMemo(() => {
-    const termino = busqueda.trim().toLowerCase();
-    return (pacientes.data ?? []).filter(
-      (paciente) => !termino || `${nombreCompleto(paciente)} ${paciente.rut} ${paciente.email}`.toLowerCase().includes(termino),
-    );
-  }, [pacientes.data, busqueda]);
+  const pacientes = useLoad(() => api.pacientes({ q: termino, page: pagina }), [termino, pagina]);
+
+  const lista = pacientes.data?.results ?? [];
+  const total = pacientes.data?.count ?? 0;
+  const primero = (pagina - 1) * TAMANO_PAGINA + 1;
 
   const abrirNuevo = () => {
     setEditando(null);
@@ -89,7 +98,11 @@ const PatientsPage = () => {
     try {
       await api.eliminarPaciente(paciente.id);
       setAviso({ tone: "success", text: "Paciente eliminado." });
-      pacientes.reload();
+      if (lista.length === 1 && pagina > 1) {
+        setPagina(pagina - 1);
+      } else {
+        pacientes.reload();
+      }
     } catch (error) {
       setAviso({ tone: "error", text: error instanceof Error ? error.message : "No se pudo eliminar el paciente." });
     }
@@ -125,7 +138,7 @@ const PatientsPage = () => {
           <Spinner />
         ) : pacientes.error ? (
           <Notice tone="error">{pacientes.error}</Notice>
-        ) : visibles.length === 0 ? (
+        ) : lista.length === 0 ? (
           <EmptyState title="Sin resultados" description="No hay pacientes que coincidan con la búsqueda." />
         ) : (
           <div className="overflow-x-auto">
@@ -140,7 +153,7 @@ const PatientsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {visibles.map((paciente) => (
+                {lista.map((paciente) => (
                   <tr key={paciente.id} className="hover">
                     <td className="font-medium text-neutral">{nombreCompleto(paciente)}</td>
                     <td>{paciente.rut}</td>
@@ -168,6 +181,22 @@ const PatientsPage = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {total > 0 && (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-base-content/70">
+            <span>
+              Mostrando {primero}–{primero + lista.length - 1} de {total}
+            </span>
+            <div className="join">
+              <button className="btn btn-outline btn-sm join-item" disabled={!pacientes.data?.previous} onClick={() => setPagina(pagina - 1)}>
+                Anterior
+              </button>
+              <button className="btn btn-outline btn-sm join-item" disabled={!pacientes.data?.next} onClick={() => setPagina(pagina + 1)}>
+                Siguiente
+              </button>
+            </div>
           </div>
         )}
       </section>

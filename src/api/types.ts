@@ -31,6 +31,13 @@ export interface Servicio {
   precio: string;
 }
 
+export interface Pagina<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
 export interface Paciente {
   id: number;
   rut: string;

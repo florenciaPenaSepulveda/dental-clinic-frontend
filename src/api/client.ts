@@ -9,6 +9,7 @@ import type {
   MiHistorial,
   Paciente,
   PacienteInput,
+  Pagina,
   Reserva,
   ReservaCambios,
   ReservaCreada,
@@ -98,7 +99,7 @@ export const api = {
   cambiarClave: (actual: string, nueva: string) =>
     request<Sesion>("/auth/cambiar-clave/", { method: "POST", body: JSON.stringify({ actual, nueva }) }),
   servicios: () => request<Servicio[]>("/api/servicios/"),
-  pacientes: () => request<Paciente[]>("/api/pacientes/"),
+  pacientes: (filtros: { q?: string; page?: number } = {}) => request<Pagina<Paciente>>(`/api/pacientes/${query(filtros)}`),
   buscarPaciente: async (rut: string): Promise<Paciente | null> => {
     try {
       return await request<Paciente>(`/api/pacientes/buscar/${query({ rut })}`);
@@ -116,8 +117,6 @@ export const api = {
   eliminarPaciente: (id: number) => request<void>(`/api/pacientes/${id}/`, { method: "DELETE" }),
   slotsPorFecha: (fecha: string, dentistaId?: number) =>
     request<SlotDisponible[]>(`/slots_por_fecha/${query({ fecha, dentista_id: dentistaId })}`),
-  reservas: (filtros: { fecha?: string; dentista?: number } = {}) =>
-    request<Reserva[]>(`/api/reservas/${query(filtros)}`),
   crearReserva: (data: ReservaInput, archivos: File[] = []) => {
     if (archivos.length === 0) {
       return request<ReservaCreada>("/reservas/", { method: "POST", body: JSON.stringify(data) });
