@@ -23,6 +23,10 @@ const MiCuentaPage = () => {
       setAviso({ tone: "error", text: "La nueva contraseña debe tener al menos 8 caracteres." });
       return;
     }
+    if (nueva === actual) {
+      setAviso({ tone: "error", text: "La nueva contraseña debe ser distinta de la actual." });
+      return;
+    }
     if (nueva !== repetida) {
       setAviso({ tone: "error", text: "Las contraseñas nuevas no coinciden." });
       return;
@@ -47,6 +51,7 @@ const MiCuentaPage = () => {
       <PageHeader title="Mi cuenta" subtitle={sesion ? `${sesion.nombre} · ${etiquetaRol[sesion.rol]} · usuario ${sesion.username}` : undefined} />
       <form onSubmit={enviar} className="surface mx-auto max-w-md space-y-4">
         <h2 className="section-title">Cambiar contraseña</h2>
+        {sesion?.debe_cambiar_clave && <Notice tone="info">Tu contraseña es temporal. Debes cambiarla para poder usar el sistema.</Notice>}
         <label className="form-control">
           <span className="label py-1">
             <span className="field-label">Contraseña actual</span>

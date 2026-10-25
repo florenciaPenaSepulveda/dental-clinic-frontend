@@ -8,6 +8,9 @@ const RequireRol = ({ roles }: { roles: Rol[] }) => {
   if (!sesion) {
     return <Navigate to="/ingresar" replace state={{ desde: location.pathname }} />;
   }
+  if (sesion.debe_cambiar_clave && location.pathname !== "/mi-cuenta") {
+    return <Navigate to="/mi-cuenta" replace />;
+  }
   return roles.includes(sesion.rol) ? <Outlet /> : <Navigate to="/" replace />;
 };
 

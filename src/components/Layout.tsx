@@ -17,8 +17,9 @@ const pacienteLinks = [{ to: "/mi-historial", label: "Mi historial", end: false 
 
 const cuentaLink = { to: "/mi-cuenta", label: "Mi cuenta", end: false };
 
-const enlacesDe = (rol?: string) => {
+const enlacesDe = (rol?: string, debeCambiarClave = false) => {
   if (!rol) return publicLinks;
+  if (debeCambiarClave) return [cuentaLink];
   const propios = rol === "paciente" ? pacienteLinks : rol === "recepcion" ? [...staffLinks, equipoLink] : staffLinks;
   return [...publicLinks, ...propios, cuentaLink];
 };
@@ -31,7 +32,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
 
 export const Navbar = () => {
   const { sesion, cerrarSesion } = useAuth();
-  const links = enlacesDe(sesion?.rol);
+  const links = enlacesDe(sesion?.rol, sesion?.debe_cambiar_clave);
 
   return (
     <header className="bg-primary text-primary-content shadow">

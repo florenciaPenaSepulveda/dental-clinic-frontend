@@ -9,14 +9,15 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const pedido = (location.state as { desde?: string } | null)?.desde;
-  const destinoPorRol = (rol?: string) => pedido ?? (rol === "paciente" ? "/mi-historial" : "/agenda");
+  const destinoDe = (rol?: string, debeCambiarClave?: boolean) =>
+    debeCambiarClave ? "/mi-cuenta" : (pedido ?? (rol === "paciente" ? "/mi-historial" : "/agenda"));
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
 
   if (sesion) {
-    return <Navigate to={destinoPorRol(sesion.rol)} replace />;
+    return <Navigate to={destinoDe(sesion.rol, sesion.debe_cambiar_clave)} replace />;
   }
 
   const enviar = async (event: FormEvent) => {
@@ -29,7 +30,7 @@ const LoginPage = () => {
     setError("");
     try {
       const nueva = await iniciarSesion(username.trim(), password);
-      navigate(destinoPorRol(nueva.rol), { replace: true });
+      navigate(destinoDe(nueva.rol, nueva.debe_cambiar_clave), { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar sesión.");
       setEnviando(false);

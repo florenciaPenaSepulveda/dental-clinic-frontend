@@ -9,6 +9,7 @@ export interface Sesion {
   nombre: string;
   dentista_id?: number;
   paciente_id?: number;
+  debe_cambiar_clave?: boolean;
 }
 
 const listeners = new Set<() => void>();

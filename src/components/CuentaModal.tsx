@@ -47,7 +47,7 @@ const Contenido = ({ persona, generar, onClose, onHecho }: Omit<Props, "persona"
           <dd className="font-mono text-base">{resultado.password}</dd>
         </dl>
         <p className="text-sm text-base-content/70">
-          Anótala y entrégala a {nombreCompleto(persona)}: no se volverá a mostrar. Se recomienda cambiarla desde la sección Mi cuenta en el primer ingreso.
+          Anótala y entrégala a {nombreCompleto(persona)}: no se volverá a mostrar. Deberá cambiarla en su primer ingreso para poder usar el sistema.
         </p>
         <div className="modal-action">
           <button type="button" className="btn btn-primary" onClick={onClose}>
