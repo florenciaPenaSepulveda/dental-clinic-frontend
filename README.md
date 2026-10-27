@@ -4,6 +4,16 @@
 
 Interfaz web de una clínica dental para reservar horas, ver la agenda del día y administrar pacientes. Consume la API REST del backend y está construida con React, Vite, TypeScript, Tailwind CSS y daisyUI.
 
+## Inicio rápido
+
+```
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Abre `http://localhost:5173` (requiere el [backend](https://github.com/florenciaPenaSepulveda/dental-clinic-backend) en ejecución). Pruebas con 99 % de cobertura (`npm test`).
+
 ## Repositorios del proyecto
 
 | Repositorio | Descripción |
@@ -35,13 +45,7 @@ Interfaz web de una clínica dental para reservar horas, ver la agenda del día 
 
 ## Puesta en marcha
 
-```
-cp .env.example .env
-npm install
-npm run dev
-```
-
-Disponible en `http://localhost:5173`. La URL de la API se configura con `VITE_API_URL` (por defecto `http://localhost:8000/agenda`).
+Los comandos están en [Inicio rápido](#inicio-rápido). Disponible en `http://localhost:5173`. La URL de la API se configura con `VITE_API_URL` (por defecto `http://localhost:8000/agenda`).
 
 ## Comandos
 
