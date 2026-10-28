@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect, useId, useRef } from "react";
 
 interface Props {
   open: boolean;
@@ -10,6 +10,7 @@ interface Props {
 
 const Modal = ({ open, title, onClose, children, wide = false }: Props) => {
   const ref = useRef<HTMLDialogElement>(null);
+  const tituloId = useId();
 
   useEffect(() => {
     const dialog = ref.current;
@@ -25,9 +26,9 @@ const Modal = ({ open, title, onClose, children, wide = false }: Props) => {
   }, [open]);
 
   return (
-    <dialog ref={ref} className="modal" onClose={onClose}>
+    <dialog ref={ref} className="modal" aria-labelledby={tituloId} onClose={onClose}>
       <div className={`modal-box ${wide ? "max-w-3xl" : "max-w-lg"}`}>
-        <h3 className="mb-4 text-lg font-semibold text-primary">{title}</h3>
+        <h3 id={tituloId} className="mb-4 text-lg font-semibold text-primary">{title}</h3>
         {children}
       </div>
       <form method="dialog" className="modal-backdrop">

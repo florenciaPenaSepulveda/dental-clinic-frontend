@@ -95,13 +95,13 @@ const EquipoPage = () => {
           <div className="overflow-x-auto">
             <table className="table">
               <thead>
-                <tr className="text-xs uppercase text-base-content/60">
+                <tr className="text-xs uppercase text-base-content/70">
                   <th>Nombre</th>
                   <th>Especialidad</th>
                   <th>Correo</th>
                   <th>Teléfono</th>
                   <th>Acceso</th>
-                  <th />
+                  <th><span className="sr-only">Acciones</span></th>
                 </tr>
               </thead>
               <tbody>

@@ -148,7 +148,7 @@ const ReservationPage = () => {
                   </option>
                 ))}
               </select>
-              <span className="mt-1 text-xs text-base-content/60">Valor referencial: el pago se realiza en la consulta.</span>
+              <span className="mt-1 text-xs text-base-content/70">Valor referencial: el pago se realiza en la consulta.</span>
             </label>
             <label className="form-control">
               <span className="label py-1">
@@ -203,7 +203,7 @@ const ReservationPage = () => {
                     );
                   })}
                 </div>
-                <p className="mt-3 text-xs text-base-content/60">
+                <p className="mt-3 text-xs text-base-content/70">
                   Verde: disponible · Ámbar: solo sobrecupo · Gris: completo. {formatFecha(fecha)}.
                 </p>
               </>

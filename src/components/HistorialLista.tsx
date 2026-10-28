@@ -16,7 +16,7 @@ export const claseEstado: Record<EstadoReserva, string> = {
 
 const Dato = ({ titulo, valor }: { titulo: string; valor: string }) => (
   <div>
-    <dt className="text-xs uppercase text-base-content/60">{titulo}</dt>
+    <dt className="text-xs uppercase text-base-content/70">{titulo}</dt>
     <dd className="whitespace-pre-line">{valor}</dd>
   </div>
 );

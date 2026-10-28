@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 const publicLinks = [
@@ -25,10 +26,11 @@ const enlacesDe = (rol?: string, debeCambiarClave = false) => {
 };
 
 const baseLink = "rounded-btn px-3 py-2 text-sm font-medium transition-colors";
-const idleLink = "text-primary-content/80 hover:bg-primary-content/10 hover:text-primary-content";
+// Texto blanco pleno sobre el primario (5.47:1); el estado activo/hover oscurece el fondo en vez de aclararlo (>= 6.9:1).
+const idleLink = "text-primary-content hover:bg-black/15";
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `${baseLink} ${isActive ? "bg-primary-content/15 text-primary-content" : idleLink}`;
+  `${baseLink} ${isActive ? "bg-black/20 text-primary-content" : idleLink}`;
 
 export const Navbar = () => {
   const { sesion, cerrarSesion } = useAuth();
@@ -69,19 +71,47 @@ export const Navbar = () => {
 };
 
 export const Footer = () => (
-  <footer className="border-t border-base-300 bg-base-100 py-4 text-center text-xs text-base-content/60">
+  <footer className="border-t border-base-300 bg-base-100 py-4 text-center text-xs text-base-content/70">
     Clínica Dental · Agenda y reservas en línea
   </footer>
 );
 
-const Layout = () => (
-  <div className="flex min-h-screen flex-col">
-    <Navbar />
-    <main id="contenido" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-      <Outlet />
-    </main>
-    <Footer />
-  </div>
-);
+const titulos: Record<string, string> = {
+  "/": "Inicio",
+  "/reservar": "Reservar hora",
+  "/ingresar": "Ingresar",
+  "/activar-cuenta": "Activar cuenta",
+  "/agenda": "Agenda",
+  "/pacientes": "Pacientes",
+  "/equipo": "Equipo",
+  "/mi-cuenta": "Mi cuenta",
+  "/mi-historial": "Mi historial",
+};
+
+const Layout = () => {
+  const { pathname } = useLocation();
+  const principal = useRef<HTMLElement>(null);
+  const primeraCarga = useRef(true);
+
+  // En una SPA el navegador no anuncia el cambio de página: se actualiza el título y se lleva el foco al contenido.
+  useEffect(() => {
+    document.title = `${titulos[pathname] ?? "Clínica Dental"} · Clínica Dental`;
+    if (primeraCarga.current) {
+      primeraCarga.current = false;
+      return;
+    }
+    principal.current?.focus();
+  }, [pathname]);
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <Navbar />
+      <main ref={principal} id="contenido" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 focus:outline-none">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  );
+};
 
 export default Layout;

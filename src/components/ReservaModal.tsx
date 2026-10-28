@@ -32,7 +32,7 @@ const vacia = (atencion: Reserva["atencion"]): AtencionInput => ({
 
 const Campo = ({ titulo, valor }: { titulo: string; valor: string }) => (
   <div>
-    <dt className="text-xs uppercase text-base-content/60">{titulo}</dt>
+    <dt className="text-xs uppercase text-base-content/70">{titulo}</dt>
     <dd className="whitespace-pre-line">{valor || "Sin registrar"}</dd>
   </div>
 );
@@ -252,7 +252,7 @@ const Detalle = ({ inicial, slots, servicios, rol, onClose, onCambio, onVerHisto
             <Campo titulo="Indicaciones" valor={actual.atencion.indicaciones} />
           </dl>
         ) : (
-          <p className="text-sm text-base-content/60">El dentista aún no registra la atención.</p>
+          <p className="text-sm text-base-content/70">El dentista aún no registra la atención.</p>
         )}
       </section>
 

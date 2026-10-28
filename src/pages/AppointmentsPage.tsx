@@ -174,7 +174,7 @@ const AppointmentsPage = () => {
             <div className="overflow-x-auto">
               <table className="table table-sm min-w-[820px] table-fixed">
                 <thead>
-                  <tr className="text-xs uppercase text-base-content/60">
+                  <tr className="text-xs uppercase text-base-content/70">
                     <th className="w-16">Hora</th>
                     {dias.map((dia) => (
                       <th key={dia} className={dia === hoy ? "text-primary" : ""}>
@@ -197,7 +197,7 @@ const AppointmentsPage = () => {
                 </tbody>
               </table>
             </div>
-            <p className="mt-3 text-xs text-base-content/60">Azul: pendiente · Verde: atendida · Ámbar: no asistió. Haz clic en una reserva para ver el detalle o en un horario libre para agendar.</p>
+            <p className="mt-3 text-xs text-base-content/70">Azul: pendiente · Verde: atendida · Ámbar: no asistió. Haz clic en una reserva para ver el detalle o en un horario libre para agendar.</p>
           </>
         )}
       </section>

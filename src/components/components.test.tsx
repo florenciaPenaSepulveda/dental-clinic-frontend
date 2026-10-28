@@ -101,7 +101,10 @@ describe("componentes simples", () => {
     expect(screen.getByText("Cargando...")).toBeInTheDocument();
     expect(screen.getByText("Sin datos")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent("Falló");
-    expect(screen.getByRole("status")).toHaveTextContent("Listo");
+    const estados = screen.getAllByRole("status");
+    expect(estados).toHaveLength(2);
+    expect(estados[0]).toHaveTextContent("Cargando...");
+    expect(estados[1]).toHaveTextContent("Listo");
   });
 });
 

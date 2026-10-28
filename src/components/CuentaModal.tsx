@@ -41,9 +41,9 @@ const Contenido = ({ persona, generar, onClose, onHecho }: Omit<Props, "persona"
       <div className="space-y-4">
         <Notice tone="success">{resultado.creada ? "Cuenta creada." : "Contraseña restablecida."}</Notice>
         <dl className="rounded-box border border-base-300 bg-base-200 p-4 text-sm">
-          <dt className="text-xs uppercase text-base-content/60">Usuario</dt>
+          <dt className="text-xs uppercase text-base-content/70">Usuario</dt>
           <dd className="mb-2 font-mono text-base">{resultado.username}</dd>
-          <dt className="text-xs uppercase text-base-content/60">Contraseña temporal</dt>
+          <dt className="text-xs uppercase text-base-content/70">Contraseña temporal</dt>
           <dd className="font-mono text-base">{resultado.password}</dd>
         </dl>
         <p className="text-sm text-base-content/70">
