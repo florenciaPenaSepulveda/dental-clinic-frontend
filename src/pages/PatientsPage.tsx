@@ -142,40 +142,42 @@ const PatientsPage = () => {
           <EmptyState title="Sin resultados" description="No hay pacientes que coincidan con la búsqueda." />
         ) : (
           <div className="overflow-x-auto">
-            <table className="table">
+            <table className="table min-w-[1040px] table-fixed">
               <thead>
                 <tr className="text-xs uppercase text-base-content/70">
-                  <th>Nombre</th>
-                  <th>RUT</th>
-                  <th>Teléfono</th>
+                  <th className="w-[20%]">Nombre</th>
+                  <th className="w-32">RUT</th>
+                  <th className="w-36">Teléfono</th>
                   <th>Correo</th>
-                  <th><span className="sr-only">Acciones</span></th>
+                  <th className="w-[26rem]"><span className="sr-only">Acciones</span></th>
                 </tr>
               </thead>
               <tbody>
                 {lista.map((paciente) => (
                   <tr key={paciente.id} className="hover">
-                    <td className="font-medium text-neutral">{nombreCompleto(paciente)}</td>
-                    <td>{paciente.rut}</td>
-                    <td>{paciente.telefono || "-"}</td>
-                    <td>{paciente.email || "-"}</td>
-                    <td className="whitespace-nowrap text-right">
-                      <button className="btn btn-ghost btn-xs" onClick={() => setHistorialDe(paciente)}>
-                        Historial
-                      </button>
-                      {puedeEditar && (
-                        <>
-                          <button className="btn btn-ghost btn-xs" onClick={() => abrirEdicion(paciente)}>
-                            Editar
-                          </button>
-                          <button className="btn btn-ghost btn-xs" onClick={() => setCuentaDe(paciente)}>
-                            {paciente.tiene_cuenta ? "Restablecer acceso" : "Crear cuenta"}
-                          </button>
-                          <button className="btn btn-ghost btn-xs text-error" onClick={() => eliminar(paciente)}>
-                            Eliminar
-                          </button>
-                        </>
-                      )}
+                    <td className="truncate font-medium text-neutral" title={nombreCompleto(paciente)}>{nombreCompleto(paciente)}</td>
+                    <td className="whitespace-nowrap tabular-nums">{paciente.rut}</td>
+                    <td className="whitespace-nowrap tabular-nums">{paciente.telefono || "-"}</td>
+                    <td className="truncate" title={paciente.email || undefined}>{paciente.email || "-"}</td>
+                    <td>
+                      <div className="flex justify-end gap-1">
+                        <button className="btn btn-ghost btn-xs w-20" onClick={() => setHistorialDe(paciente)}>
+                          Historial
+                        </button>
+                        {puedeEditar && (
+                          <>
+                            <button className="btn btn-ghost btn-xs w-16" onClick={() => abrirEdicion(paciente)}>
+                              Editar
+                            </button>
+                            <button className="btn btn-ghost btn-xs w-36" onClick={() => setCuentaDe(paciente)}>
+                              {paciente.tiene_cuenta ? "Restablecer acceso" : "Crear cuenta"}
+                            </button>
+                            <button className="btn btn-ghost btn-xs w-20 text-error" onClick={() => eliminar(paciente)}>
+                              Eliminar
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

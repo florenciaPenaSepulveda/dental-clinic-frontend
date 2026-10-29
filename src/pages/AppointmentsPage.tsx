@@ -209,7 +209,7 @@ const AppointmentsPage = () => {
 
       <section className="surface h-fit">
         <h2 className="section-title mb-1">Generar horarios</h2>
-        <p className="mb-4 text-base-content/70">Crea bloques de 30 minutos para un dentista.</p>
+        <p className="mb-4 text-base-content/70">Crea bloques de 30 minutos para un dentista, desde la hora inicial hasta la final, en tantos días seguidos como indiques. Los sábados y domingos también cuentan, y los horarios que ya existen no se duplican.</p>
         <form onSubmit={generarHorarios} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <label className="form-control">
             <span className="label py-1">

@@ -13,6 +13,14 @@ export const formatFecha = (fecha: string): string => {
   return `${dia}/${mes}/${anio}`;
 };
 
+export const formatFechaLarga = (fecha: string): string =>
+  new Date(`${fecha}T00:00:00`).toLocaleDateString("es-CL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
 export const formatFechaCorta = (fecha: string): string => formatFecha(fecha).slice(0, 5);
 
 export const parseFecha = (texto: string): string | null => {

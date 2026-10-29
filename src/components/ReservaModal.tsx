@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api } from "../api/client";
 import type { Archivo, AtencionInput, EstadoReserva, Paciente, Reserva, Rol, Servicio, SlotSemana } from "../api/types";
 import { validarArchivos } from "../lib/archivos";
-import { formatFecha, formatHora, nombreCompleto } from "../lib/format";
+import { formatFechaLarga, formatHora, nombreCompleto } from "../lib/format";
 import { etiquetaDiaCompleta } from "../lib/semana";
 import ArchivosLista from "./ArchivosLista";
 import { etiquetaEstado } from "./HistorialLista";
@@ -152,7 +152,7 @@ const Detalle = ({ inicial, slots, servicios, rol, onClose, onCambio, onVerHisto
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <Campo titulo="Paciente" valor={`${nombreCompleto(actual.paciente)} · ${actual.paciente.rut}`} />
         <Campo titulo="Contacto" valor={[actual.paciente.telefono, actual.paciente.email].filter(Boolean).join(" · ")} />
-        <Campo titulo="Fecha y hora" valor={`${formatFecha(actual.slot.fecha)} · ${formatHora(actual.slot.hora)}`} />
+        <Campo titulo="Fecha y hora" valor={`${formatFechaLarga(actual.slot.fecha)} · ${formatHora(actual.slot.hora)}`} />
         <Campo titulo="Tipo" valor={actual.sobrecupo ? "Sobrecupo" : "Normal"} />
         <div className="sm:col-span-2">
           <Campo titulo="Motivo de la consulta" valor={actual.motivo} />

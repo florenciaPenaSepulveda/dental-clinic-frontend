@@ -8,7 +8,7 @@ import { PacienteSelector, usePacienteSelector } from "../components/PacienteSel
 import SelectorArchivos from "../components/SelectorArchivos";
 import { EmptyState, Notice, Spinner } from "../components/States";
 import { useLoad } from "../hooks/useLoad";
-import { formatFecha, formatHora, formatPrecio, nombreCompleto, todayISO } from "../lib/format";
+import { formatFecha, formatFechaLarga, formatHora, formatPrecio, nombreCompleto, todayISO } from "../lib/format";
 import { validarArchivos } from "../lib/archivos";
 
 type Estado = "disponible" | "sobrecupo" | "lleno";
@@ -95,7 +95,7 @@ const ReservationPage = () => {
       );
       const elegido = slots.find((slot) => slot.id === slotId);
       const profesional = dentistas.find((dentista) => String(dentista.id) === dentistaId);
-      const detalle = elegido && profesional ? ` Te esperamos el ${formatFecha(fecha)} a las ${formatHora(elegido.hora)} con ${nombreCompleto(profesional)}.` : "";
+      const detalle = elegido && profesional ? ` Te esperamos el ${formatFechaLarga(fecha)} a las ${formatHora(elegido.hora)} con ${nombreCompleto(profesional)}.` : "";
       setAviso({
         tone: "success",
         text: `${creada.sobrecupo ? "Reserva confirmada como sobrecupo." : "Reserva confirmada."}${detalle} Si el paciente tiene email registrado, recibirá la confirmación por correo.`,

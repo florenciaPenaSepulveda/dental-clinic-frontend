@@ -1,4 +1,4 @@
-import { formatFecha, formatFechaCorta, formatHora, parseFecha, formatPrecio, nombreCompleto, todayISO } from "./format";
+import { formatFecha, formatFechaCorta, formatFechaLarga, formatHora, parseFecha, formatPrecio, nombreCompleto, todayISO } from "./format";
 import { cleanRut, formatRut, isValidRut } from "./rut";
 import { archivo as archivoDe, sesionDe } from "../test/fixtures";
 import { api } from "../api/client";
@@ -112,6 +112,7 @@ describe("format", () => {
     expect(formatHora("10:30:00")).toBe("10:30");
     expect(formatFecha("2026-10-25")).toBe("25/10/2026");
     expect(formatFechaCorta("2026-10-25")).toBe("25/10");
+    expect(formatFechaLarga("2026-10-25")).toMatch(/domingo.*25 de octubre de 2026/);
     expect(parseFecha("25/10/2026")).toBe("2026-10-25");
     expect(parseFecha("31/02/2026")).toBeNull();
     expect(parseFecha("25-10-2026")).toBeNull();
