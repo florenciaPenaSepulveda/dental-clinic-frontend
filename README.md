@@ -34,6 +34,11 @@ Abre `http://localhost:5173` (requiere el [backend](https://github.com/florencia
 
 ## Demostración en línea
 
+- **Demo:** https://dental-clinic-frontend-sjnv.onrender.com
+- **API:** https://dental-clinic-backend-4eov.onrender.com/agenda/api/dentistas/
+
+Para probar las vistas con sesión usa el usuario `recepcion` (recepción: agenda, pacientes y equipo), `dr.rojas` (dentista) o el RUT `14.000.000-0` (paciente), todos con la contraseña `Demo-h1eur-Clinica-6l8ax`. Son cuentas de demostración con datos ficticios.
+
 La demo se publica como *Static Site* en el plan gratuito de Render, junto con el backend (ver su README). Muestra un aviso fijo arriba que indica que los datos son ficticios; el aviso solo aparece si se compila con `VITE_DEMO=true`, así que el desarrollo local y un despliegue real no lo muestran.
 
 Los datos de la demo **se reinician**: el backend usa SQLite y el plan gratuito de Render borra el disco cuando el servicio se duerme (tras unos 15 minutos sin uso) o se redespliega. Es intencional: cada arranque carga de nuevo los datos de demostración, así que cualquier persona que pruebe la aplicación la encuentra ordenada. La primera visita tras un periodo de inactividad puede tardar hasta un minuto mientras el servidor despierta.
