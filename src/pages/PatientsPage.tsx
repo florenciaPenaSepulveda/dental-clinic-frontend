@@ -160,7 +160,7 @@ const PatientsPage = () => {
                     <td className="whitespace-nowrap tabular-nums">{paciente.telefono || "-"}</td>
                     <td className="truncate" title={paciente.email || undefined}>{paciente.email || "-"}</td>
                     <td>
-                      <div className="flex justify-end gap-1">
+                      <div className="row-actions">
                         <button className="btn btn-ghost btn-xs w-20" onClick={() => setHistorialDe(paciente)}>
                           Historial
                         </button>
@@ -172,7 +172,7 @@ const PatientsPage = () => {
                             <button className="btn btn-ghost btn-xs w-36" onClick={() => setCuentaDe(paciente)}>
                               {paciente.tiene_cuenta ? "Restablecer acceso" : "Crear cuenta"}
                             </button>
-                            <button className="btn btn-ghost btn-xs w-20 text-error" onClick={() => eliminar(paciente)}>
+                            <button className="btn btn-ghost btn-xs btn-danger w-20" onClick={() => eliminar(paciente)}>
                               Eliminar
                             </button>
                           </>
@@ -192,10 +192,10 @@ const PatientsPage = () => {
               Mostrando {primero}–{primero + lista.length - 1} de {total}
             </span>
             <div className="join">
-              <button className="btn btn-outline btn-sm join-item" disabled={!pacientes.data?.previous} onClick={() => setPagina(pagina - 1)}>
+              <button className="btn btn-outline btn-primary btn-sm join-item" disabled={!pacientes.data?.previous} onClick={() => setPagina(pagina - 1)}>
                 Anterior
               </button>
-              <button className="btn btn-outline btn-sm join-item" disabled={!pacientes.data?.next} onClick={() => setPagina(pagina + 1)}>
+              <button className="btn btn-outline btn-primary btn-sm join-item" disabled={!pacientes.data?.next} onClick={() => setPagina(pagina + 1)}>
                 Siguiente
               </button>
             </div>

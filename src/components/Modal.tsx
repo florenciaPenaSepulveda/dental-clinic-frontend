@@ -28,7 +28,7 @@ const Modal = ({ open, title, onClose, children, wide = false }: Props) => {
   return (
     <dialog ref={ref} className="modal" aria-labelledby={tituloId} onClose={onClose}>
       <div className={`modal-box ${wide ? "max-w-3xl" : "max-w-lg"}`}>
-        <h3 id={tituloId} className="mb-4 text-lg font-semibold text-primary">{title}</h3>
+        <h3 id={tituloId} className="modal-title">{title}</h3>
         {children}
       </div>
       <form method="dialog" className="modal-backdrop">

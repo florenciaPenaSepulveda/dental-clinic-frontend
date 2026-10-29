@@ -72,7 +72,7 @@ export const Navbar = () => {
 };
 
 export const Footer = () => (
-  <footer className="border-t border-base-300 bg-base-100 py-4 text-center text-xs text-base-content/70">
+  <footer className="border-t border-base-300 bg-base-100 py-4 text-center hint">
     Clínica Dental · Agenda y reservas en línea
   </footer>
 );
@@ -80,7 +80,7 @@ export const Footer = () => (
 // Solo en el sitio de demostración (VITE_DEMO=true al compilar): avisa que los datos son ficticios y se reinician.
 export const AvisoDemo = () =>
   import.meta.env.VITE_DEMO === "true" ? (
-    <div role="note" className="border-b border-amber-300 bg-amber-100 px-4 py-2 text-center text-xs text-amber-900">
+    <div role="note" className="border-b border-warning/30 bg-warning/10 px-4 py-2 text-center text-xs text-neutral">
       <strong>Demostración:</strong> los datos son ficticios y se reinician cuando el servidor se duerme (tras unos 15 minutos sin uso).
       No ingreses datos reales. La primera carga puede tardar hasta un minuto.
     </div>

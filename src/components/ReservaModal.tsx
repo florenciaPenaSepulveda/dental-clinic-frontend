@@ -160,13 +160,13 @@ const Detalle = ({ inicial, slots, servicios, rol, onClose, onCambio, onVerHisto
       </dl>
 
       <section className="space-y-3">
-        <h4 className="section-title">Reserva</h4>
+        <h4 className="subsection-title">Reserva</h4>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="form-control">
             <span className="label py-1">
               <span className="field-label">Estado</span>
             </span>
-            <select className="select select-bordered select-sm w-full" value={estado} onChange={(e) => setEstado(e.target.value as EstadoReserva)}>
+            <select className="select select-bordered w-full" value={estado} onChange={(e) => setEstado(e.target.value as EstadoReserva)}>
               {(Object.keys(etiquetaEstado) as EstadoReserva[]).map((valor) => (
                 <option key={valor} value={valor}>
                   {etiquetaEstado[valor]}
@@ -178,7 +178,7 @@ const Detalle = ({ inicial, slots, servicios, rol, onClose, onCambio, onVerHisto
             <span className="label py-1">
               <span className="field-label">Servicio</span>
             </span>
-            <select className="select select-bordered select-sm w-full" value={servicioId} onChange={(e) => setServicioId(e.target.value)}>
+            <select className="select select-bordered w-full" value={servicioId} onChange={(e) => setServicioId(e.target.value)}>
               <option value="">Sin especificar</option>
               {servicios.map((servicio) => (
                 <option key={servicio.id} value={servicio.id}>
@@ -191,7 +191,7 @@ const Detalle = ({ inicial, slots, servicios, rol, onClose, onCambio, onVerHisto
             <span className="label py-1">
               <span className="field-label">Reprogramar a</span>
             </span>
-            <select className="select select-bordered select-sm w-full" value={slotId} onChange={(e) => setSlotId(e.target.value)}>
+            <select className="select select-bordered w-full" value={slotId} onChange={(e) => setSlotId(e.target.value)}>
               <option value="">No cambiar</option>
               {destinos.map((slot) => (
                 <option key={slot.id} value={slot.id}>
@@ -213,7 +213,7 @@ const Detalle = ({ inicial, slots, servicios, rol, onClose, onCambio, onVerHisto
       </section>
 
       <section className="space-y-3">
-        <h4 className="section-title">Archivos adjuntos</h4>
+        <h4 className="subsection-title">Archivos adjuntos</h4>
         <ArchivosLista archivos={actual.archivos} onEliminar={eliminarArchivo} />
         <SelectorArchivos archivos={nuevos} error={errorArchivos} onChange={cambiarNuevos} etiqueta="Agregar archivos" />
         {nuevos.length > 0 && (
@@ -224,7 +224,7 @@ const Detalle = ({ inicial, slots, servicios, rol, onClose, onCambio, onVerHisto
       </section>
 
       <section className="space-y-3">
-        <h4 className="section-title">Atención clínica</h4>
+        <h4 className="subsection-title">Atención clínica</h4>
         {esDentista ? (
           <>
             {(["diagnostico", "procedimiento", "indicaciones"] as const).map((campo) => (
@@ -259,10 +259,10 @@ const Detalle = ({ inicial, slots, servicios, rol, onClose, onCambio, onVerHisto
       {aviso && <Notice tone={aviso.tone}>{aviso.text}</Notice>}
 
       <div className="modal-action flex-wrap">
-        <button type="button" className="btn btn-ghost text-error" disabled={ocupado} onClick={cancelar}>
+        <button type="button" className="btn btn-ghost btn-danger" disabled={ocupado} onClick={cancelar}>
           Cancelar reserva
         </button>
-        <button type="button" className="btn btn-outline" onClick={() => onVerHistorial(actual.paciente)}>
+        <button type="button" className="btn btn-outline btn-primary" onClick={() => onVerHistorial(actual.paciente)}>
           Ver historial
         </button>
         <button type="button" className="btn btn-ghost" onClick={onClose}>

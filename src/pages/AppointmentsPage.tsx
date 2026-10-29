@@ -146,17 +146,17 @@ const AppointmentsPage = () => {
               </label>
             )}
           </div>
-          <p className="order-last w-full text-center text-2xl font-bold text-primary sm:order-none sm:w-auto" aria-live="polite">
+          <p className="page-title order-last w-full text-center sm:order-none sm:w-auto" aria-live="polite">
             {mesDeLaSemana(lunes)}
           </p>
           <div className="join">
-            <button type="button" className="btn btn-outline btn-sm join-item" aria-label="Semana anterior" onClick={() => cambiarSemana(-7)}>
+            <button type="button" className="btn btn-outline btn-primary btn-sm join-item" aria-label="Semana anterior" onClick={() => cambiarSemana(-7)}>
               ←
             </button>
-            <button type="button" className="btn btn-outline btn-sm join-item" onClick={() => setLunes(lunesDe(todayISO()))}>
+            <button type="button" className="btn btn-outline btn-primary btn-sm join-item" onClick={() => setLunes(lunesDe(todayISO()))}>
               Hoy
             </button>
-            <button type="button" className="btn btn-outline btn-sm join-item" aria-label="Semana siguiente" onClick={() => cambiarSemana(7)}>
+            <button type="button" className="btn btn-outline btn-primary btn-sm join-item" aria-label="Semana siguiente" onClick={() => cambiarSemana(7)}>
               →
             </button>
           </div>
@@ -182,7 +182,7 @@ const AppointmentsPage = () => {
                     <th className="w-16">Hora</th>
                     {dias.map((dia) => (
                       <th key={dia} className={dia === hoy ? "bg-primary/10 text-primary" : ""}>
-                        <span className="block text-sm font-bold">{nombreDia(dia)}</span>{" "}
+                        <span className="block text-sm font-semibold">{nombreDia(dia)}</span>{" "}
                         <span className="block text-base font-semibold normal-case">{formatFechaCorta(dia)}</span>
                       </th>
                     ))}
@@ -202,13 +202,13 @@ const AppointmentsPage = () => {
                 </tbody>
               </table>
             </div>
-            <p className="mt-3 text-xs text-base-content/70">Azul: pendiente · Verde: atendida · Ámbar: no asistió. Haz clic en una reserva para ver el detalle o en un horario libre para agendar.</p>
+            <p className="mt-3 hint">Azul: pendiente · Verde: atendida · Ámbar: no asistió. Haz clic en una reserva para ver el detalle o en un horario libre para agendar.</p>
           </>
         )}
       </section>
 
       <section className="surface h-fit">
-        <h2 className="section-title mb-1">Generar horarios</h2>
+        <h2 className="section-title mb-3">Generar horarios</h2>
         <p className="mb-4 text-base-content/70">Crea bloques de 30 minutos para un dentista, desde la hora inicial hasta la final, en tantos días seguidos como indiques. Los sábados y domingos también cuentan, y los horarios que ya existen no se duplican.</p>
         <form onSubmit={generarHorarios} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <label className="form-control">

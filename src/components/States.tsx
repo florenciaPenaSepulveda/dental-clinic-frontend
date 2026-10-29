@@ -15,7 +15,7 @@ interface EmptyProps {
 
 export const EmptyState = ({ title, description, action }: EmptyProps) => (
   <div className="flex flex-col items-center gap-2 rounded-box border border-dashed border-base-300 bg-base-100 px-6 py-10 text-center">
-    <p className="text-base font-semibold text-neutral">{title}</p>
+    <p className="subsection-title">{title}</p>
     {description && <p className="max-w-md text-base-content/70">{description}</p>}
     {action && <div className="mt-2">{action}</div>}
   </div>

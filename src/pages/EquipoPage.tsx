@@ -116,13 +116,15 @@ const EquipoPage = () => {
                         {dentista.tiene_cuenta ? "Con cuenta" : "Sin cuenta"}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap text-right">
-                      <button className="btn btn-ghost btn-xs" onClick={() => abrirEdicion(dentista)}>
-                        Editar
-                      </button>
-                      <button className="btn btn-ghost btn-xs" onClick={() => setCuentaDe(dentista)}>
-                        {dentista.tiene_cuenta ? "Restablecer acceso" : "Crear cuenta"}
-                      </button>
+                    <td>
+                      <div className="row-actions">
+                        <button className="btn btn-ghost btn-xs w-16" onClick={() => abrirEdicion(dentista)}>
+                          Editar
+                        </button>
+                        <button className="btn btn-ghost btn-xs w-36" onClick={() => setCuentaDe(dentista)}>
+                          {dentista.tiene_cuenta ? "Restablecer acceso" : "Crear cuenta"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

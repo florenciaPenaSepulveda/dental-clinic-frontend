@@ -149,13 +149,13 @@ const ReservationPage = () => {
                   </option>
                 ))}
               </select>
-              <span className="mt-1 text-xs text-base-content/70">Valor referencial: el pago se realiza en la consulta.</span>
+              <span className="mt-1 hint">Valor referencial: el pago se realiza en la consulta.</span>
             </label>
             <DateField label="Fecha" value={fecha} min={todayISO()} onChange={elegirFecha} />
           </div>
 
           <div>
-            <h2 className="section-title mb-2">Horarios disponibles</h2>
+            <h2 className="section-title mb-3">Horarios disponibles</h2>
             {!dentistaId ? (
               <p className="text-base-content/70">Elige un dentista para ver sus horarios.</p>
             ) : agenda.loading ? (
@@ -193,7 +193,7 @@ const ReservationPage = () => {
                     );
                   })}
                 </div>
-                <p className="mt-3 text-xs text-base-content/70">
+                <p className="mt-3 hint">
                   Verde: disponible · Ámbar: solo sobrecupo · Gris: completo. {formatFecha(fecha)}.
                 </p>
               </>

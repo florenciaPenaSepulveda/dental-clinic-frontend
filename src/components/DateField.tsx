@@ -100,7 +100,7 @@ const DateField = ({ label, value, min, onChange }: Props) => {
         />
       </div>
       {error && (
-        <p id={`${id}-error`} role="alert" className="mt-1 text-xs text-error">
+        <p id={`${id}-error`} role="alert" className="field-error">
           {error}
         </p>
       )}

@@ -24,16 +24,16 @@ const SelectorArchivos = ({ archivos, error, onChange, etiqueta = "Exámenes o d
         type="file"
         multiple
         accept=".pdf,.jpg,.jpeg,.png"
-        className="file-input file-input-bordered file-input-sm w-full"
+        className="file-input file-input-bordered w-full"
         onChange={agregar}
       />
-      <span className="mt-1 text-xs text-base-content/70">PDF, JPG o PNG de hasta 5 MB cada uno (máximo 5).</span>
+      <span className="mt-1 hint">PDF, JPG o PNG de hasta 5 MB cada uno (máximo 5).</span>
       {archivos.length > 0 && (
         <ul className="mt-2 space-y-1">
           {archivos.map((archivo, indice) => (
             <li key={`${archivo.name}-${indice}`} className="flex items-center justify-between gap-2 rounded-btn bg-base-200 px-3 py-1 text-sm">
               <span className="truncate">
-                {archivo.name} <span className="text-xs text-base-content/70">({formatTamano(archivo.size)})</span>
+                {archivo.name} <span className="hint">({formatTamano(archivo.size)})</span>
               </span>
               <button
                 type="button"

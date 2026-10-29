@@ -29,13 +29,13 @@ const ArchivosLista = ({ archivos, onEliminar }: Props) => {
         {archivos.map((archivo) => (
           <li key={archivo.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
             <span className="min-w-0 flex-1 truncate">
-              {archivo.nombre} <span className="text-xs text-base-content/70">({formatTamano(archivo.tamano)})</span>
+              {archivo.nombre} <span className="hint">({formatTamano(archivo.tamano)})</span>
             </span>
             <button type="button" className="btn btn-ghost btn-xs" aria-label={`Descargar ${archivo.nombre}`} onClick={() => descargar(archivo)}>
               Descargar
             </button>
             {onEliminar && (
-              <button type="button" className="btn btn-ghost btn-xs text-error" aria-label={`Eliminar ${archivo.nombre}`} onClick={() => onEliminar(archivo)}>
+              <button type="button" className="btn btn-ghost btn-xs btn-danger" aria-label={`Eliminar ${archivo.nombre}`} onClick={() => onEliminar(archivo)}>
                 Eliminar
               </button>
             )}
