@@ -76,6 +76,15 @@ export const Footer = () => (
   </footer>
 );
 
+// Solo en el sitio de demostración (VITE_DEMO=true al compilar): avisa que los datos son ficticios y se reinician.
+export const AvisoDemo = () =>
+  import.meta.env.VITE_DEMO === "true" ? (
+    <div role="note" className="border-b border-amber-300 bg-amber-100 px-4 py-2 text-center text-xs text-amber-900">
+      <strong>Demostración:</strong> los datos son ficticios y se reinician cuando el servidor se duerme (tras unos 15 minutos sin uso).
+      No ingreses datos reales. La primera carga puede tardar hasta un minuto.
+    </div>
+  ) : null;
+
 const titulos: Record<string, string> = {
   "/": "Inicio",
   "/reservar": "Reservar hora",
@@ -105,6 +114,7 @@ const Layout = () => {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <AvisoDemo />
       <Navbar />
       <main ref={principal} id="contenido" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 focus:outline-none">
         <Outlet />

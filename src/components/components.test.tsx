@@ -31,6 +31,24 @@ describe("Layout", () => {
     expect(nav).not.toHaveTextContent("Agenda");
     expect(nav).not.toHaveTextContent("Pacientes");
     expect(screen.getByText(/Agenda y reservas en línea/)).toBeInTheDocument();
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
+  });
+
+  it("avisa que los datos son de demostración cuando VITE_DEMO está activo", () => {
+    vi.stubEnv("VITE_DEMO", "true");
+    render(
+      <MemoryRouter initialEntries={["/prueba"]}>
+        <AuthProvider>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/prueba" element={<p>Contenido</p>} />
+            </Route>
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("note")).toHaveTextContent("los datos son ficticios y se reinician");
+    vi.unstubAllEnvs();
   });
 });
 
