@@ -16,6 +16,7 @@ import type {
   ReservaInput,
   Servicio,
   ServicioInput,
+  ConflictosDeServicio,
   SlotDisponible,
   SlotSemana,
 } from "./types";
@@ -101,6 +102,8 @@ export const api = {
     request<Sesion>("/auth/cambiar-clave/", { method: "POST", body: JSON.stringify({ actual, nueva }) }),
   servicios: () => request<Servicio[]>("/api/servicios/"),
   crearServicio: (data: ServicioInput) => request<Servicio>("/api/servicios/", { method: "POST", body: JSON.stringify(data) }),
+  conflictosDeServicio: (id: number, duracionMin: number) =>
+    request<ConflictosDeServicio>(`/api/servicios/${id}/conflictos/${query({ duracion_min: duracionMin })}`),
   actualizarServicio: (id: number, data: ServicioInput) =>
     request<Servicio>(`/api/servicios/${id}/`, { method: "PATCH", body: JSON.stringify(data) }),
   pacientes: (filtros: { q?: string; page?: number } = {}) => request<Pagina<Paciente>>(`/api/pacientes/${query(filtros)}`),

@@ -14,6 +14,8 @@ vi.mock("../api/client", () => ({
     servicios: vi.fn(),
     crearServicio: vi.fn(),
     actualizarServicio: vi.fn(),
+    conflictosDeServicio: vi.fn(),
+    cancelarReserva: vi.fn(),
   },
 }));
 
@@ -27,6 +29,7 @@ const renderPagina = () =>
       <AuthProvider>
         <Routes>
           <Route path="/" element={<p>Inicio público</p>} />
+          <Route path="/agenda" element={<p>Agenda de la clínica</p>} />
           <Route element={<RequireRol roles={["recepcion"]} />}>
             <Route path="/servicios" element={<ServiciosPage />} />
           </Route>
@@ -42,6 +45,7 @@ beforeEach(() => {
   sessionStorage.clear();
   guardarSesion(sesionDe("recepcion"));
   mocked.servicios.mockResolvedValue([servicio, largo]);
+  mocked.conflictosDeServicio.mockResolvedValue({ duracion_actual: 90, duracion_nueva: 60, conflictos: [] });
 });
 
 describe("Formato de duración", () => {
@@ -52,6 +56,17 @@ describe("Formato de duración", () => {
     expect([15, 30, 45, 60, 90].map(bloquesDe)).toEqual([1, 1, 2, 2, 3]);
   });
 });
+
+const choque = {
+  id: 11,
+  fecha: "2026-11-03",
+  hora: "16:00",
+  paciente: "Juan Soto",
+  dentista: "Ana Pérez",
+  dentista_id: 1,
+  servicio: "Limpieza",
+  motivo: "superpuesta" as const,
+};
 
 describe("Servicios", () => {
   it("lista los servicios con su duración y los horarios que ocupan", async () => {
@@ -128,5 +143,74 @@ describe("Servicios", () => {
     await user.type(form.getByLabelText("Precio (CLP)"), "10000");
     await user.click(form.getByRole("button", { name: "Crear servicio" }));
     expect(await form.findByRole("alert")).toHaveTextContent("La duración debe estar entre 15 y 240 minutos.");
+  });
+
+  describe("al cambiar la duración de un servicio con citas agendadas", () => {
+    const abrirConChoque = async () => {
+      const user = userEvent.setup();
+      mocked.conflictosDeServicio.mockResolvedValue({ duracion_actual: 30, duracion_nueva: 60, conflictos: [choque] });
+      mocked.actualizarServicio.mockResolvedValue({ ...servicio, duracion_min: 60 });
+      renderPagina();
+      const fila = (await screen.findByText("Limpieza")).closest("tr") as HTMLElement;
+      await user.click(within(fila).getByRole("button", { name: "Editar" }));
+      await user.selectOptions(formulario().getByLabelText("Duración"), "60");
+      await user.click(formulario().getByRole("button", { name: "Guardar cambios" }));
+      return user;
+    };
+
+    const ventana = () => within(screen.getByRole("heading", { name: "Citas que chocarían con la nueva duración", hidden: true }).closest("dialog") as HTMLElement);
+
+    it("avisa qué citas chocan y no guarda hasta que se decida", async () => {
+      await abrirConChoque();
+      expect(mocked.conflictosDeServicio).toHaveBeenCalledWith(1, 60);
+      const modal = await screen.findByRole("heading", { name: "Citas que chocarían con la nueva duración", hidden: true });
+      expect(modal).toBeInTheDocument();
+      const detalle = ventana();
+      expect(detalle.getByText("Juan Soto")).toBeInTheDocument();
+      expect(detalle.getByText(/03\/11\/2026 16:00/)).toBeInTheDocument();
+      expect(detalle.getByText("Se superpone con la cita siguiente")).toBeInTheDocument();
+      expect(mocked.actualizarServicio).not.toHaveBeenCalled();
+    });
+
+    it("permite volver sin guardar", async () => {
+      const user = await abrirConChoque();
+      await screen.findByText("Juan Soto");
+      await user.click(ventana().getByRole("button", { name: "Volver sin guardar" }));
+      expect(mocked.actualizarServicio).not.toHaveBeenCalled();
+    });
+
+    it("guarda igualmente y deja avisado que quedan citas por reagendar", async () => {
+      const user = await abrirConChoque();
+      await screen.findByText("Juan Soto");
+      await user.click(ventana().getByRole("button", { name: "Guardar igualmente" }));
+      expect(mocked.actualizarServicio).toHaveBeenCalledWith(1, { nombre: "Limpieza", duracion_min: 60, precio: "25000" });
+      expect(await screen.findByText(/Quedan 1 cita con choque de horario/)).toBeInTheDocument();
+    });
+
+    it("guarda y lleva a la agenda del dentista en la fecha de la cita", async () => {
+      const user = await abrirConChoque();
+      await screen.findByText("Juan Soto");
+      await user.click(ventana().getByRole("button", { name: "Guardar y reagendar en la agenda" }));
+      expect(await screen.findByText("Agenda de la clínica")).toBeInTheDocument();
+      expect(mocked.actualizarServicio).toHaveBeenCalled();
+    });
+
+    it("cancela una cita desde la lista tras confirmar", async () => {
+      const user = await abrirConChoque();
+      await screen.findByText("Juan Soto");
+      vi.spyOn(window, "confirm").mockReturnValueOnce(true);
+      mocked.cancelarReserva.mockResolvedValue(undefined);
+      await user.click(ventana().getByRole("button", { name: "Cancelar cita" }));
+      expect(mocked.cancelarReserva).toHaveBeenCalledWith(11);
+      expect(ventana().queryByText("Juan Soto")).not.toBeInTheDocument();
+    });
+
+    it("no cancela si no se confirma", async () => {
+      const user = await abrirConChoque();
+      await screen.findByText("Juan Soto");
+      vi.spyOn(window, "confirm").mockReturnValueOnce(false);
+      await user.click(ventana().getByRole("button", { name: "Cancelar cita" }));
+      expect(mocked.cancelarReserva).not.toHaveBeenCalled();
+    });
   });
 });

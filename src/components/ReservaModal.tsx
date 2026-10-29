@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { api } from "../api/client";
-import type { Archivo, AtencionInput, EstadoReserva, Paciente, Reserva, Rol, Servicio, SlotSemana } from "../api/types";
+import type { Archivo, AtencionInput, EstadoReserva, MotivoConflicto, Paciente, Reserva, Rol, Servicio, SlotSemana } from "../api/types";
 import { validarArchivos } from "../lib/archivos";
+import { textoDeConflicto } from "../lib/conflictos";
 import { formatDuracion, formatFechaLarga, formatHora, nombreCompleto } from "../lib/format";
 import { etiquetaDiaCompleta } from "../lib/semana";
 import ArchivosLista from "./ArchivosLista";
@@ -15,6 +16,7 @@ interface Props {
   slots: SlotSemana[];
   servicios: Servicio[];
   rol: Rol;
+  conflicto?: MotivoConflicto;
   onClose: () => void;
   onCambio: (mensaje?: string) => void;
   onVerHistorial: (paciente: Paciente) => void;
@@ -37,7 +39,7 @@ const Campo = ({ titulo, valor }: { titulo: string; valor: string }) => (
   </div>
 );
 
-const Detalle = ({ inicial, slots, servicios, rol, onClose, onCambio, onVerHistorial }: DetalleProps) => {
+const Detalle = ({ inicial, slots, servicios, rol, conflicto, onClose, onCambio, onVerHistorial }: DetalleProps) => {
   const [actual, setActual] = useState(inicial);
   const [estado, setEstado] = useState<EstadoReserva>(inicial.estado);
   const [servicioId, setServicioId] = useState(inicial.servicio ? String(inicial.servicio.id) : "");
@@ -149,6 +151,11 @@ const Detalle = ({ inicial, slots, servicios, rol, onClose, onCambio, onVerHisto
 
   return (
     <div className="space-y-5">
+      {conflicto && (
+        <Notice tone="error">
+          Choque de horario: {textoDeConflicto[conflicto].toLowerCase()}. Cambia el horario o el servicio de esta cita para resolverlo.
+        </Notice>
+      )}
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <Campo titulo="Paciente" valor={`${nombreCompleto(actual.paciente)} · ${actual.paciente.rut}`} />
         <Campo titulo="Contacto" valor={[actual.paciente.telefono, actual.paciente.email].filter(Boolean).join(" · ")} />

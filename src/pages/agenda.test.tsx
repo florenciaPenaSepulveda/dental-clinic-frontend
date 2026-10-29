@@ -430,6 +430,36 @@ describe("Horarios ocupados por la duración", () => {
   });
 });
 
+describe("Citas en choque de horario", () => {
+  it("marca la cita que ya no cabe y explica cómo resolverla", async () => {
+    const user = userEvent.setup();
+    const lunes = lunesDe(todayISO());
+    mocked.semana.mockResolvedValue([
+      { ...slotSemana(1, lunes, "09:00:00", [reserva(1, 1)]), conflictos: [{ reserva: 1, motivo: "superpuesta" }] },
+      { ...slotSemana(2, lunes, "09:30:00", [reserva(2, 2)]), bloqueado: true },
+    ]);
+    renderAgenda();
+    await screen.findAllByRole("option", { name: "Ana Pérez" });
+    await user.selectOptions(screen.getAllByLabelText("Dentista")[0], "1");
+    expect(await screen.findByText("Choque de horario")).toBeInTheDocument();
+    expect(screen.getAllByText(/Juan Soto/).length).toBe(2);
+    await user.click(screen.getAllByRole("button", { name: /^Reserva de Juan Soto/ })[0]);
+    expect(await screen.findByText(/Cambia el horario o el servicio de esta cita para resolverlo/)).toBeInTheDocument();
+  });
+
+  it("abre la agenda del dentista y la semana indicadas en la dirección", async () => {
+    mocked.semana.mockResolvedValue([]);
+    render(
+      <MemoryRouter initialEntries={["/agenda?dentista=1&fecha=2026-11-04"]}>
+        <AuthProvider>
+          <AppointmentsPage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+    await waitFor(() => expect(mocked.semana).toHaveBeenCalledWith("2026-11-02", 1));
+  });
+});
+
 describe("Generar horarios", () => {
   it("genera horarios para un dentista", async () => {
     const user = userEvent.setup();

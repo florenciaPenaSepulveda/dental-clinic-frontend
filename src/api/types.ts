@@ -33,6 +33,25 @@ export interface Servicio {
 
 export type ServicioInput = Omit<Servicio, "id">;
 
+export type MotivoConflicto = "superpuesta" | "excede";
+
+export interface ConflictoDeServicio {
+  id: number;
+  fecha: string;
+  hora: string;
+  paciente: string;
+  dentista: string;
+  dentista_id: number;
+  servicio: string | null;
+  motivo: MotivoConflicto;
+}
+
+export interface ConflictosDeServicio {
+  duracion_actual: number;
+  duracion_nueva: number;
+  conflictos: ConflictoDeServicio[];
+}
+
 export interface Pagina<T> {
   count: number;
   next: string | null;
@@ -118,6 +137,7 @@ export interface SlotSemana {
   max_overbook: number;
   reservas: Reserva[];
   bloqueado: boolean;
+  conflictos: { reserva: number; motivo: MotivoConflicto }[];
 }
 
 export interface HistorialItem {

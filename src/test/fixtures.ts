@@ -88,6 +88,7 @@ export const slotSemana = (id: number, fecha: string, hora: string, reservas: Re
   max_overbook,
   reservas,
   bloqueado: false,
+  conflictos: [],
 });
 
 export const historialItem = (id: number, extra: Partial<HistorialItem> = {}): HistorialItem => ({

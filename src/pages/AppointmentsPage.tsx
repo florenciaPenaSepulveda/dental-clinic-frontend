@@ -1,4 +1,5 @@
 import { FormEvent, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { EstadoReserva, Paciente, Reserva, SlotSemana } from "../api/types";
 import AgendarModal from "../components/AgendarModal";
@@ -30,13 +31,18 @@ const mensajeDeGeneracion = (creados: number, existentes: number): string => {
 
 const hayCupo = (slot: SlotSemana): boolean => slot.reservas.length < slot.capacidad + slot.max_overbook;
 
+const esFecha = (valor: string | null): valor is string => valor !== null && /^\d{4}-\d{2}-\d{2}$/.test(valor);
+
 const AppointmentsPage = () => {
   const { sesion } = useAuth();
+  const [parametros] = useSearchParams();
   const esDentista = sesion?.rol === "dentista";
   const dentistaPropio = esDentista && sesion?.dentista_id ? String(sesion.dentista_id) : "";
 
-  const [lunes, setLunes] = useState(() => lunesDe(todayISO()));
-  const [dentistaId, setDentistaId] = useState(dentistaPropio);
+  const fechaPedida = parametros.get("fecha");
+  const dentistaPedido = parametros.get("dentista");
+  const [lunes, setLunes] = useState(() => lunesDe(esFecha(fechaPedida) ? fechaPedida : todayISO()));
+  const [dentistaId, setDentistaId] = useState(dentistaPropio || (dentistaPedido && /^\d+$/.test(dentistaPedido) ? dentistaPedido : ""));
   const [aAgendar, setAAgendar] = useState<SlotSemana | null>(null);
   const [abierta, setAbierta] = useState<Reserva | null>(null);
   const [historialDe, setHistorialDe] = useState<Paciente | null>(null);
@@ -101,7 +107,7 @@ const AppointmentsPage = () => {
     if (!slot) {
       return <span className="block text-center text-base-content/30">·</span>;
     }
-    if (slot.bloqueado) {
+    if (slot.bloqueado && slot.reservas.length === 0) {
       return (
         <span className="block rounded-btn bg-base-200 px-2 py-1 text-center text-xs text-base-content/70" title="Ocupado por la duración de la cita anterior">
           Ocupado
@@ -110,12 +116,14 @@ const AppointmentsPage = () => {
     }
     return (
       <div className="space-y-1">
-        {slot.reservas.map((reserva) => (
+        {slot.reservas.map((reserva) => {
+          const choque = slot.conflictos.some((conflicto) => conflicto.reserva === reserva.id);
+          return (
           <button
             key={reserva.id}
             type="button"
             aria-label={`Reserva de ${nombreCompleto(reserva.paciente)} ${etiquetaDia(dia)} ${hora}`}
-            className={`w-full rounded-btn border px-2 py-1 text-left text-xs transition hover:shadow ${estiloDelEstado[reserva.estado]}`}
+            className={`w-full rounded-btn border px-2 py-1 text-left text-xs transition hover:shadow ${choque ? "border-error bg-error/10" : estiloDelEstado[reserva.estado]}`}
             onClick={() => abrirReserva(reserva)}
           >
             <span className="block truncate font-semibold text-neutral">{nombreCompleto(reserva.paciente)}</span>
@@ -123,9 +131,11 @@ const AppointmentsPage = () => {
               {reserva.servicio?.nombre ?? "Sin servicio"}
               {reserva.sobrecupo ? " · sobrecupo" : ""}
             </span>
+            {choque && <span className="block text-[11px] font-semibold text-error">Choque de horario</span>}
           </button>
-        ))}
-        {hayCupo(slot) && (
+          );
+        })}
+        {hayCupo(slot) && !slot.bloqueado && (
           <button
             type="button"
             aria-label={`Agendar ${etiquetaDia(dia)} ${hora}`}
@@ -297,6 +307,7 @@ const AppointmentsPage = () => {
         slots={slots}
         servicios={servicios}
         rol={sesion?.rol ?? "recepcion"}
+        conflicto={abierta ? slots.flatMap((slot) => slot.conflictos).find((conflicto) => conflicto.reserva === abierta.id)?.motivo : undefined}
         onClose={() => setAbierta(null)}
         onCambio={alCambiar}
         onVerHistorial={setHistorialDe}

@@ -1,12 +1,14 @@
 import { FormEvent, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
-import type { Servicio, ServicioInput } from "../api/types";
+import type { ConflictoDeServicio, Servicio, ServicioInput } from "../api/types";
+import ConflictosServicioModal from "../components/ConflictosServicioModal";
 import { Field } from "../components/HelpTip";
 import Modal from "../components/Modal";
 import PageHeader from "../components/PageHeader";
 import { EmptyState, Notice, Spinner } from "../components/States";
 import { useLoad } from "../hooks/useLoad";
-import { bloquesDe, formatDuracion, formatPrecio } from "../lib/format";
+import { bloquesDe, formatDuracion, formatFecha, formatPrecio } from "../lib/format";
 
 type Aviso = { tone: "success" | "error"; text: string } | null;
 
@@ -25,6 +27,8 @@ const ServiciosPage = () => {
   const [errorForm, setErrorForm] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [aviso, setAviso] = useState<Aviso>(null);
+  const [conflictos, setConflictos] = useState<ConflictoDeServicio[] | null>(null);
+  const navigate = useNavigate();
 
   const abrirNuevo = () => {
     setEditando(null);
@@ -40,6 +44,58 @@ const ServiciosPage = () => {
     setAbierto(true);
   };
 
+  const persistir = async (datos: ServicioInput, pendientes: number): Promise<boolean> => {
+    setGuardando(true);
+    setErrorForm("");
+    try {
+      if (editando) {
+        await api.actualizarServicio(editando.id, datos);
+        setAviso({
+          tone: pendientes > 0 ? "error" : "success",
+          text:
+            pendientes > 0
+              ? `Servicio actualizado. Quedan ${pendientes} ${pendientes === 1 ? "cita" : "citas"} con choque de horario: reagéndalas desde la agenda.`
+              : "Servicio actualizado.",
+        });
+      } else {
+        await api.crearServicio(datos);
+        setAviso({ tone: "success", text: "Servicio creado." });
+      }
+      setAbierto(false);
+      servicios.reload();
+      return true;
+    } catch (error) {
+      setErrorForm(error instanceof Error ? error.message : "No se pudo guardar el servicio.");
+      return false;
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const cancelarCita = async (conflicto: ConflictoDeServicio) => {
+    if (!window.confirm(`¿Cancelar la cita de ${conflicto.paciente} el ${formatFecha(conflicto.fecha)} a las ${conflicto.hora}?`)) {
+      return;
+    }
+    try {
+      await api.cancelarReserva(conflicto.id);
+      setConflictos((actuales) => (actuales ? actuales.filter((c) => c.id !== conflicto.id) : actuales));
+    } catch (error) {
+      setErrorForm(error instanceof Error ? error.message : "No se pudo cancelar la cita.");
+    }
+  };
+
+  const guardarConConflictos = async (revisarEnAgenda: boolean) => {
+    const pendientes = conflictos ?? [];
+    const datos = { ...form, nombre: form.nombre.trim() };
+    const guardado = await persistir(datos, pendientes.length);
+    if (!guardado) return;
+    setConflictos(null);
+    if (revisarEnAgenda && pendientes.length > 0) {
+      const primero = pendientes[0];
+      navigate(`/agenda?dentista=${primero.dentista_id}&fecha=${primero.fecha}`);
+    }
+  };
+
   const guardar = async (event: FormEvent) => {
     event.preventDefault();
     if (!form.nombre.trim()) {
@@ -50,24 +106,23 @@ const ServiciosPage = () => {
       setErrorForm("Ingresa un precio válido.");
       return;
     }
-    setGuardando(true);
-    setErrorForm("");
-    try {
-      const datos = { ...form, nombre: form.nombre.trim() };
-      if (editando) {
-        await api.actualizarServicio(editando.id, datos);
-        setAviso({ tone: "success", text: "Servicio actualizado. Los cambios de duración aplican a las reservas nuevas y a las que se modifiquen." });
-      } else {
-        await api.crearServicio(datos);
-        setAviso({ tone: "success", text: "Servicio creado." });
+    const datos = { ...form, nombre: form.nombre.trim() };
+    if (editando && datos.duracion_min !== editando.duracion_min) {
+      setGuardando(true);
+      try {
+        const { conflictos: encontrados } = await api.conflictosDeServicio(editando.id, datos.duracion_min);
+        if (encontrados.length > 0) {
+          setConflictos(encontrados);
+          return;
+        }
+      } catch (error) {
+        setErrorForm(error instanceof Error ? error.message : "No se pudo revisar las citas agendadas.");
+        return;
+      } finally {
+        setGuardando(false);
       }
-      setAbierto(false);
-      servicios.reload();
-    } catch (error) {
-      setErrorForm(error instanceof Error ? error.message : "No se pudo guardar el servicio.");
-    } finally {
-      setGuardando(false);
     }
+    await persistir(datos, 0);
   };
 
   const lista = servicios.data ?? [];
@@ -180,6 +235,16 @@ const ServiciosPage = () => {
           </div>
         </form>
       </Modal>
+
+      <ConflictosServicioModal
+        conflictos={conflictos}
+        duracionActual={editando?.duracion_min ?? form.duracion_min}
+        duracionNueva={form.duracion_min}
+        guardando={guardando}
+        onVolver={() => setConflictos(null)}
+        onCancelarCita={cancelarCita}
+        onGuardar={guardarConConflictos}
+      />
     </>
   );
 };
