@@ -9,12 +9,15 @@ import { useAuth } from "../hooks/useAuth";
 import SelectorArchivos from "../components/SelectorArchivos";
 import { EmptyState, Notice, Spinner } from "../components/States";
 import { useLoad } from "../hooks/useLoad";
-import { formatFecha, formatFechaLarga, formatHora, formatPrecio, nombreCompleto, todayISO } from "../lib/format";
+import { formatDuracion, formatFecha, formatFechaLarga, formatHora, formatPrecio, nombreCompleto, todayISO } from "../lib/format";
 import { validarArchivos } from "../lib/archivos";
 
-type Estado = "disponible" | "sobrecupo" | "lleno";
+type Estado = "disponible" | "sobrecupo" | "lleno" | "bloqueado" | "no_cabe";
 
 const estadoDelSlot = (slot: SlotDisponible): { estado: Estado; cupos: number } => {
+  if (slot.bloqueado) {
+    return { estado: "bloqueado", cupos: 0 };
+  }
   if (slot.reservas_count < slot.capacidad) {
     return { estado: "disponible", cupos: slot.capacidad - slot.reservas_count };
   }
@@ -24,10 +27,21 @@ const estadoDelSlot = (slot: SlotDisponible): { estado: Estado; cupos: number } 
   return { estado: "lleno", cupos: 0 };
 };
 
+const conServicio = (slot: SlotDisponible, estado: Estado): Estado => (estado !== "lleno" && estado !== "bloqueado" && !slot.cabe ? "no_cabe" : estado);
+
 const estiloDelEstado: Record<Estado, string> = {
   disponible: "btn-outline btn-primary",
   sobrecupo: "btn-outline btn-warning",
   lleno: "btn-disabled",
+  bloqueado: "btn-disabled",
+  no_cabe: "btn-disabled",
+};
+
+const tituloDelSlot = (estado: Estado, cupos: number): string => {
+  if (estado === "lleno") return "Horario completo";
+  if (estado === "bloqueado") return "Ocupado por la duración de una cita anterior";
+  if (estado === "no_cabe") return "No hay tiempo suficiente para el servicio elegido";
+  return estado === "sobrecupo" ? `Sobrecupo (${cupos})` : `${cupos} cupo(s)`;
 };
 
 const ReservationPage = () => {
@@ -46,8 +60,8 @@ const ReservationPage = () => {
 
   const catalogos = useLoad(() => Promise.all([api.dentistas(), api.servicios()]), []);
   const agenda = useLoad(
-    () => (dentistaId ? api.slotsPorFecha(fecha, Number(dentistaId)) : Promise.resolve([] as SlotDisponible[])),
-    [dentistaId, fecha],
+    () => (dentistaId ? api.slotsPorFecha(fecha, Number(dentistaId), servicioId ? Number(servicioId) : undefined) : Promise.resolve([] as SlotDisponible[])),
+    [dentistaId, fecha, servicioId],
   );
 
   const [dentistas, servicios] = catalogos.data ?? [[], []];
@@ -148,7 +162,7 @@ const ReservationPage = () => {
                 <option value="">Sin especificar</option>
                 {servicios.map((servicio) => (
                   <option key={servicio.id} value={servicio.id}>
-                    {servicio.nombre} · {formatPrecio(servicio.precio)}
+                    {servicio.nombre} · {formatDuracion(servicio.duracion_min)} · {formatPrecio(servicio.precio)}
                   </option>
                 ))}
               </select>
@@ -179,15 +193,17 @@ const ReservationPage = () => {
               <>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
                   {slots.map((slot) => {
-                    const { estado, cupos } = estadoDelSlot(slot);
+                    const base = estadoDelSlot(slot);
+                    const estado = conServicio(slot, base.estado);
+                    const cupos = base.cupos;
                     const seleccionado = slotId === slot.id;
                     return (
                       <button
                         key={slot.id}
                         type="button"
-                        disabled={estado === "lleno"}
+                        disabled={estado === "lleno" || estado === "bloqueado" || estado === "no_cabe"}
                         aria-pressed={seleccionado}
-                        title={estado === "lleno" ? "Horario completo" : estado === "sobrecupo" ? `Sobrecupo (${cupos})` : `${cupos} cupo(s)`}
+                        title={tituloDelSlot(estado, cupos)}
                         onClick={() => setSlotId(slot.id)}
                         className={`btn btn-sm ${seleccionado ? "btn-primary" : estiloDelEstado[estado]}`}
                       >
@@ -197,7 +213,7 @@ const ReservationPage = () => {
                   })}
                 </div>
                 <p className="mt-3 hint">
-                  Verde: disponible · Ámbar: solo sobrecupo · Gris: completo. {formatFecha(fecha)}.
+                  Verde: disponible · Ámbar: solo sobrecupo · Gris: completo, ocupado por una cita anterior o sin tiempo suficiente para el servicio elegido. {formatFecha(fecha)}.
                 </p>
               </>
             )}

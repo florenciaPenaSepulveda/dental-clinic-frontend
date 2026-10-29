@@ -101,6 +101,13 @@ const AppointmentsPage = () => {
     if (!slot) {
       return <span className="block text-center text-base-content/30">·</span>;
     }
+    if (slot.bloqueado) {
+      return (
+        <span className="block rounded-btn bg-base-200 px-2 py-1 text-center text-xs text-base-content/70" title="Ocupado por la duración de la cita anterior">
+          Ocupado
+        </span>
+      );
+    }
     return (
       <div className="space-y-1">
         {slot.reservas.map((reserva) => (

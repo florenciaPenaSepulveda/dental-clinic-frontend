@@ -11,6 +11,7 @@ import MiCuentaPage from "./pages/MiCuentaPage";
 import MyHistoryPage from "./pages/MyHistoryPage";
 import PatientsPage from "./pages/PatientsPage";
 import ReservationPage from "./pages/ReservationPage";
+import ServiciosPage from "./pages/ServiciosPage";
 
 const App = () => (
   <BrowserRouter>
@@ -27,6 +28,7 @@ const App = () => (
           </Route>
           <Route element={<RequireRol roles={["recepcion"]} />}>
             <Route path="/equipo" element={<EquipoPage />} />
+            <Route path="/servicios" element={<ServiciosPage />} />
           </Route>
           <Route element={<RequireRol roles={["recepcion", "dentista", "paciente"]} />}>
             <Route path="/mi-cuenta" element={<MiCuentaPage />} />

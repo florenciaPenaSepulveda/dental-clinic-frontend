@@ -12,6 +12,7 @@ const tramos: Record<string, Tramo> = {
   "/agenda": { label: "Agenda", padre: "/" },
   "/pacientes": { label: "Pacientes", padre: "/" },
   "/equipo": { label: "Equipo", padre: "/" },
+  "/servicios": { label: "Servicios", padre: "/" },
   "/mi-cuenta": { label: "Mi cuenta", padre: "/" },
   "/mi-historial": { label: "Mi historial", padre: "/" },
 };

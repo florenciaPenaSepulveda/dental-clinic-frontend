@@ -15,6 +15,7 @@ import type {
   ReservaCreada,
   ReservaInput,
   Servicio,
+  ServicioInput,
   SlotDisponible,
   SlotSemana,
 } from "./types";
@@ -99,6 +100,9 @@ export const api = {
   cambiarClave: (actual: string, nueva: string) =>
     request<Sesion>("/auth/cambiar-clave/", { method: "POST", body: JSON.stringify({ actual, nueva }) }),
   servicios: () => request<Servicio[]>("/api/servicios/"),
+  crearServicio: (data: ServicioInput) => request<Servicio>("/api/servicios/", { method: "POST", body: JSON.stringify(data) }),
+  actualizarServicio: (id: number, data: ServicioInput) =>
+    request<Servicio>(`/api/servicios/${id}/`, { method: "PATCH", body: JSON.stringify(data) }),
   pacientes: (filtros: { q?: string; page?: number } = {}) => request<Pagina<Paciente>>(`/api/pacientes/${query(filtros)}`),
   buscarPaciente: async (rut: string): Promise<Paciente | null> => {
     try {
@@ -115,8 +119,8 @@ export const api = {
   actualizarPaciente: (id: number, data: PacienteInput) =>
     request<Paciente>(`/api/pacientes/${id}/`, { method: "PATCH", body: JSON.stringify(data) }),
   eliminarPaciente: (id: number) => request<void>(`/api/pacientes/${id}/`, { method: "DELETE" }),
-  slotsPorFecha: (fecha: string, dentistaId?: number) =>
-    request<SlotDisponible[]>(`/slots_por_fecha/${query({ fecha, dentista_id: dentistaId })}`),
+  slotsPorFecha: (fecha: string, dentistaId?: number, servicioId?: number) =>
+    request<SlotDisponible[]>(`/slots_por_fecha/${query({ fecha, dentista_id: dentistaId, servicio_id: servicioId })}`),
   crearReserva: (data: ReservaInput, archivos: File[] = []) => {
     if (archivos.length === 0) {
       return request<ReservaCreada>("/reservas/", { method: "POST", body: JSON.stringify(data) });

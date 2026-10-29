@@ -33,6 +33,7 @@ const paginas: { ruta: string; rol?: Rol; espera: RegExp }[] = [
   { ruta: "/agenda", rol: "recepcion", espera: /Agenda/ },
   { ruta: "/pacientes", rol: "recepcion", espera: /Juan Soto/ },
   { ruta: "/equipo", rol: "recepcion", espera: /Equipo/ },
+  { ruta: "/servicios", rol: "recepcion", espera: /Limpieza/ },
   { ruta: "/mi-cuenta", rol: "dentista", espera: /Mi cuenta/ },
   { ruta: "/mi-historial", rol: "paciente", espera: /Mi historial/ },
 ];

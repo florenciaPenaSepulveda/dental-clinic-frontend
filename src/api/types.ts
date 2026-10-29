@@ -31,6 +31,8 @@ export interface Servicio {
   precio: string;
 }
 
+export type ServicioInput = Omit<Servicio, "id">;
+
 export interface Pagina<T> {
   count: number;
   next: string | null;
@@ -70,6 +72,8 @@ export interface Slot {
 export interface SlotDisponible extends Slot {
   reservas_count: number;
   sobrecupos_count: number;
+  bloqueado: boolean;
+  cabe: boolean;
 }
 
 export type Rol = "recepcion" | "dentista" | "paciente";
@@ -113,6 +117,7 @@ export interface SlotSemana {
   capacidad: number;
   max_overbook: number;
   reservas: Reserva[];
+  bloqueado: boolean;
 }
 
 export interface HistorialItem {

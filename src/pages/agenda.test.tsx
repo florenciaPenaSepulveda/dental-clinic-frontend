@@ -414,6 +414,22 @@ describe("Atención clínica del dentista", () => {
   });
 });
 
+describe("Horarios ocupados por la duración", () => {
+  it("muestra como ocupado el horario cubierto por una cita larga y no permite agendarlo", async () => {
+    const user = userEvent.setup();
+    const lunes = lunesDe(todayISO());
+    mocked.semana.mockResolvedValue([
+      slotSemana(1, lunes, "09:00:00", [reserva(1, 1)]),
+      { ...slotSemana(2, lunes, "09:30:00"), bloqueado: true },
+      slotSemana(3, lunes, "10:00:00"),
+    ]);
+    await abrirSemana(user);
+    await screen.findByRole("button", { name: `Agendar ${etiquetaDia(lunes)} 10:00` });
+    expect(screen.getByText("Ocupado")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: `Agendar ${etiquetaDia(lunes)} 09:30` })).not.toBeInTheDocument();
+  });
+});
+
 describe("Generar horarios", () => {
   it("genera horarios para un dentista", async () => {
     const user = userEvent.setup();

@@ -32,6 +32,15 @@ export const parseFecha = (texto: string): string | null => {
   return valida ? `${anio}-${mes}-${dia}` : null;
 };
 
+export const formatDuracion = (minutos: number): string => {
+  const horas = Math.floor(minutos / 60);
+  const resto = minutos % 60;
+  if (horas === 0) return `${resto} min`;
+  return resto === 0 ? `${horas} h` : `${horas} h ${resto} min`;
+};
+
+export const bloquesDe = (minutos: number): number => Math.max(1, Math.ceil(minutos / 30));
+
 export const formatPrecio = (precio: string): string =>
   Number(precio).toLocaleString("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 

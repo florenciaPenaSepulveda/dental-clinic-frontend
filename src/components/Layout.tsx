@@ -16,6 +16,8 @@ const staffLinks = [
 
 const equipoLink = { to: "/equipo", label: "Equipo", end: false };
 
+const serviciosLink = { to: "/servicios", label: "Servicios", end: false };
+
 const pacienteLinks = [{ to: "/mi-historial", label: "Mi historial", end: false }];
 
 const cuentaLink = { to: "/mi-cuenta", label: "Mi cuenta", end: false };
@@ -23,7 +25,7 @@ const cuentaLink = { to: "/mi-cuenta", label: "Mi cuenta", end: false };
 const enlacesDe = (rol?: string, debeCambiarClave = false) => {
   if (!rol) return publicLinks;
   if (debeCambiarClave) return [cuentaLink];
-  const propios = rol === "paciente" ? pacienteLinks : rol === "recepcion" ? [...staffLinks, equipoLink] : staffLinks;
+  const propios = rol === "paciente" ? pacienteLinks : rol === "recepcion" ? [...staffLinks, equipoLink, serviciosLink] : staffLinks;
   return [...publicLinks, ...propios, cuentaLink];
 };
 
@@ -95,6 +97,7 @@ const titulos: Record<string, string> = {
   "/agenda": "Agenda",
   "/pacientes": "Pacientes",
   "/equipo": "Equipo",
+  "/servicios": "Servicios",
   "/mi-cuenta": "Mi cuenta",
   "/mi-historial": "Mi historial",
 };

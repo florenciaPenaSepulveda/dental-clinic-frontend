@@ -44,6 +44,8 @@ export const disponible = (id: number, hora: string, capacidad = 1, max_overbook
   ...slot(id, hora, capacidad, max_overbook),
   reservas_count,
   sobrecupos_count,
+  bloqueado: false,
+  cabe: true,
 });
 
 export const reserva = (id: number, slotId: number, sobrecupo = false): Reserva => ({
@@ -85,6 +87,7 @@ export const slotSemana = (id: number, fecha: string, hora: string, reservas: Re
   capacidad,
   max_overbook,
   reservas,
+  bloqueado: false,
 });
 
 export const historialItem = (id: number, extra: Partial<HistorialItem> = {}): HistorialItem => ({

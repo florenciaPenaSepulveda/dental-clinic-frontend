@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { api } from "../api/client";
 import type { Servicio, SlotDisponible } from "../api/types";
 import { validarArchivos } from "../lib/archivos";
+import { formatDuracion } from "../lib/format";
 import Modal from "./Modal";
 import { PacienteSelector, usePacienteSelector } from "./PacienteSelector";
 import SelectorArchivos from "./SelectorArchivos";
@@ -71,7 +72,7 @@ const Formulario = ({ slotId, servicios, onClose, onCreada }: FormularioProps) =
           <option value="">Sin especificar</option>
           {servicios.map((servicio) => (
             <option key={servicio.id} value={servicio.id}>
-              {servicio.nombre}
+              {servicio.nombre} · {formatDuracion(servicio.duracion_min)}
             </option>
           ))}
         </select>

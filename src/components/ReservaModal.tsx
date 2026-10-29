@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api } from "../api/client";
 import type { Archivo, AtencionInput, EstadoReserva, Paciente, Reserva, Rol, Servicio, SlotSemana } from "../api/types";
 import { validarArchivos } from "../lib/archivos";
-import { formatFechaLarga, formatHora, nombreCompleto } from "../lib/format";
+import { formatDuracion, formatFechaLarga, formatHora, nombreCompleto } from "../lib/format";
 import { etiquetaDiaCompleta } from "../lib/semana";
 import ArchivosLista from "./ArchivosLista";
 import { etiquetaEstado } from "./HistorialLista";
@@ -182,7 +182,7 @@ const Detalle = ({ inicial, slots, servicios, rol, onClose, onCambio, onVerHisto
               <option value="">Sin especificar</option>
               {servicios.map((servicio) => (
                 <option key={servicio.id} value={servicio.id}>
-                  {servicio.nombre}
+                  {servicio.nombre} · {formatDuracion(servicio.duracion_min)}
                 </option>
               ))}
             </select>
