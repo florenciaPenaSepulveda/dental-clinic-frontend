@@ -1,9 +1,9 @@
-import { formatFecha, formatHora, formatPrecio, nombreCompleto, todayISO } from "./format";
+import { formatFecha, formatFechaCorta, formatHora, parseFecha, formatPrecio, nombreCompleto, todayISO } from "./format";
 import { cleanRut, formatRut, isValidRut } from "./rut";
 import { archivo as archivoDe, sesionDe } from "../test/fixtures";
 import { api } from "../api/client";
 import { descargarArchivo, formatTamano, MAX_BYTES, validarArchivos } from "./archivos";
-import { diasDeLaSemana, etiquetaDia, lunesDe, rangoDeLaSemana, sumarDias } from "./semana";
+import { diasDeLaSemana, etiquetaDia, etiquetaDiaCompleta, lunesDe, mesDeLaSemana, rangoDeLaSemana, sumarDias } from "./semana";
 import { alCerrarSesion, borrarSesion, guardarSesion, leerSesion } from "./session";
 
 describe("rut", () => {
@@ -70,8 +70,12 @@ describe("semana", () => {
 
   it("lista los siete días y los etiqueta", () => {
     expect(diasDeLaSemana("2026-10-26")).toEqual(["2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-10-31", "2026-11-01"]);
-    expect(etiquetaDia("2026-10-26")).toMatch(/lun/i);
-    expect(rangoDeLaSemana("2026-10-26")).toMatch(/26.*2026/);
+    expect(etiquetaDia("2026-10-26")).toBe("lun 26/10");
+    expect(etiquetaDiaCompleta("2026-10-26")).toBe("lun 26/10/2026");
+    expect(rangoDeLaSemana("2026-10-26")).toBe("26/10/2026 – 01/11/2026");
+    expect(mesDeLaSemana("2026-10-26")).toBe("Octubre – Noviembre 2026");
+    expect(mesDeLaSemana("2026-11-02")).toBe("Noviembre 2026");
+    expect(mesDeLaSemana("2026-12-28")).toBe("Diciembre 2026 – Enero 2027");
   });
 });
 
@@ -106,7 +110,11 @@ describe("archivos", () => {
 describe("format", () => {
   it("formatea horas, fechas y precios", () => {
     expect(formatHora("10:30:00")).toBe("10:30");
-    expect(formatFecha("2026-10-25")).toMatch(/octubre/);
+    expect(formatFecha("2026-10-25")).toBe("25/10/2026");
+    expect(formatFechaCorta("2026-10-25")).toBe("25/10");
+    expect(parseFecha("25/10/2026")).toBe("2026-10-25");
+    expect(parseFecha("31/02/2026")).toBeNull();
+    expect(parseFecha("25-10-2026")).toBeNull();
     expect(formatPrecio("25000.00")).toMatch(/25\.000/);
     expect(nombreCompleto({ nombre: "Ana", apellido: "Pérez" })).toBe("Ana Pérez");
   });

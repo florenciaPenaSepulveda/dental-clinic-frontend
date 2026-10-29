@@ -3,7 +3,7 @@ import { api } from "../api/client";
 import type { Archivo, AtencionInput, EstadoReserva, Paciente, Reserva, Rol, Servicio, SlotSemana } from "../api/types";
 import { validarArchivos } from "../lib/archivos";
 import { formatFecha, formatHora, nombreCompleto } from "../lib/format";
-import { etiquetaDia } from "../lib/semana";
+import { etiquetaDiaCompleta } from "../lib/semana";
 import ArchivosLista from "./ArchivosLista";
 import { etiquetaEstado } from "./HistorialLista";
 import Modal from "./Modal";
@@ -195,7 +195,7 @@ const Detalle = ({ inicial, slots, servicios, rol, onClose, onCambio, onVerHisto
               <option value="">No cambiar</option>
               {destinos.map((slot) => (
                 <option key={slot.id} value={slot.id}>
-                  {etiquetaDia(slot.fecha)} · {formatHora(slot.hora)}
+                  {etiquetaDiaCompleta(slot.fecha)} · {formatHora(slot.hora)}
                 </option>
               ))}
             </select>

@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import Breadcrumbs from "./Breadcrumbs";
+import DateField from "./DateField";
 import PasswordField from "./PasswordField";
 
 describe("PasswordField", () => {
@@ -81,5 +82,54 @@ describe("Formularios de acceso", () => {
       campos.forEach((campo) => expect(campo).toHaveClass("input", "input-bordered", "w-full"));
       unmount();
     }
+  });
+});
+
+describe("DateField", () => {
+  const montar = (min?: string) => {
+    const cambio = vi.fn();
+    render(<DateField label="Fecha" value="2026-10-30" min={min} onChange={cambio} />);
+    return cambio;
+  };
+
+  it("muestra la fecha como DD/MM/AAAA", () => {
+    montar();
+    expect(screen.getByLabelText("Fecha")).toHaveValue("30/10/2026");
+  });
+
+  it("aplica la máscara al escribir y entrega la fecha en ISO", async () => {
+    const user = userEvent.setup();
+    const cambio = montar();
+    const campo = screen.getByLabelText("Fecha");
+    await user.clear(campo);
+    await user.type(campo, "05112026");
+    expect(campo).toHaveValue("05/11/2026");
+    expect(cambio).toHaveBeenLastCalledWith("2026-11-05");
+  });
+
+  it("avisa cuando la fecha no existe y no la propaga", async () => {
+    const user = userEvent.setup();
+    const cambio = montar();
+    const campo = screen.getByLabelText("Fecha");
+    await user.clear(campo);
+    await user.type(campo, "31022026");
+    expect(screen.getByRole("alert")).toHaveTextContent("DD/MM/AAAA");
+    expect(campo).toHaveAttribute("aria-invalid", "true");
+    expect(cambio).not.toHaveBeenCalled();
+  });
+
+  it("rechaza fechas anteriores al mínimo", async () => {
+    const user = userEvent.setup();
+    const cambio = montar("2026-10-29");
+    const campo = screen.getByLabelText("Fecha");
+    await user.clear(campo);
+    await user.type(campo, "28102026");
+    expect(screen.getByRole("alert")).toHaveTextContent("29/10/2026");
+    expect(cambio).not.toHaveBeenCalled();
+  });
+
+  it("tiene un botón para abrir el calendario", () => {
+    montar();
+    expect(screen.getByRole("button", { name: "Abrir calendario de fecha" })).toBeInTheDocument();
   });
 });

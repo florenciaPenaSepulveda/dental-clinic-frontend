@@ -3,13 +3,14 @@ import { api } from "../api/client";
 import type { EstadoReserva, Paciente, Reserva, SlotSemana } from "../api/types";
 import AgendarModal from "../components/AgendarModal";
 import HistorialPacienteModal from "../components/HistorialPacienteModal";
+import DateField from "../components/DateField";
 import PageHeader from "../components/PageHeader";
 import ReservaModal from "../components/ReservaModal";
 import { EmptyState, Notice, Spinner } from "../components/States";
 import { useAuth } from "../hooks/useAuth";
 import { useLoad } from "../hooks/useLoad";
-import { formatHora, nombreCompleto, todayISO } from "../lib/format";
-import { diasDeLaSemana, etiquetaDia, lunesDe, rangoDeLaSemana, sumarDias } from "../lib/semana";
+import { formatFechaCorta, formatHora, nombreCompleto, todayISO } from "../lib/format";
+import { diasDeLaSemana, etiquetaDia, etiquetaDiaCompleta, lunesDe, mesDeLaSemana, nombreDia, rangoDeLaSemana, sumarDias } from "../lib/semana";
 
 type Aviso = { tone: "success" | "error"; text: string } | null;
 
@@ -145,6 +146,9 @@ const AppointmentsPage = () => {
               </label>
             )}
           </div>
+          <p className="order-last w-full text-center text-2xl font-bold text-primary sm:order-none sm:w-auto" aria-live="polite">
+            {mesDeLaSemana(lunes)}
+          </p>
           <div className="join">
             <button type="button" className="btn btn-outline btn-sm join-item" aria-label="Semana anterior" onClick={() => cambiarSemana(-7)}>
               ←
@@ -177,8 +181,9 @@ const AppointmentsPage = () => {
                   <tr className="text-xs uppercase text-base-content/70">
                     <th className="w-16">Hora</th>
                     {dias.map((dia) => (
-                      <th key={dia} className={dia === hoy ? "text-primary" : ""}>
-                        {etiquetaDia(dia)}
+                      <th key={dia} className={dia === hoy ? "bg-primary/10 text-primary" : ""}>
+                        <span className="block text-sm font-bold">{nombreDia(dia)}</span>{" "}
+                        <span className="block text-base font-semibold normal-case">{formatFechaCorta(dia)}</span>
                       </th>
                     ))}
                   </tr>
@@ -224,12 +229,7 @@ const AppointmentsPage = () => {
               ))}
             </select>
           </label>
-          <label className="form-control">
-            <span className="label py-1">
-              <span className="field-label">Desde el día</span>
-            </span>
-            <input type="date" className="input input-bordered w-full" value={generar.fecha} min={todayISO()} onChange={(e) => setGenerar({ ...generar, fecha: e.target.value })} />
-          </label>
+          <DateField label="Desde el día" value={generar.fecha} min={todayISO()} onChange={(fecha) => setGenerar({ ...generar, fecha })} />
           <label className="form-control">
             <span className="label py-1">
               <span className="field-label">Cantidad de días</span>
@@ -260,7 +260,7 @@ const AppointmentsPage = () => {
 
       <AgendarModal
         slot={aAgendar}
-        titulo={aAgendar ? `Agendar ${etiquetaDia(aAgendar.fecha)} · ${formatHora(aAgendar.hora)}` : "Agendar"}
+        titulo={aAgendar ? `Agendar ${etiquetaDiaCompleta(aAgendar.fecha)} · ${formatHora(aAgendar.hora)}` : "Agendar"}
         servicios={servicios}
         onClose={() => setAAgendar(null)}
         onCreada={(sobrecupo) => {

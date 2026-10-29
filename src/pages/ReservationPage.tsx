@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { SlotDisponible } from "../api/types";
+import DateField from "../components/DateField";
 import PageHeader from "../components/PageHeader";
 import { PacienteSelector, usePacienteSelector } from "../components/PacienteSelector";
 import SelectorArchivos from "../components/SelectorArchivos";
@@ -150,18 +151,7 @@ const ReservationPage = () => {
               </select>
               <span className="mt-1 text-xs text-base-content/70">Valor referencial: el pago se realiza en la consulta.</span>
             </label>
-            <label className="form-control">
-              <span className="label py-1">
-                <span className="field-label">Fecha</span>
-              </span>
-              <input
-                type="date"
-                className="input input-bordered w-full"
-                value={fecha}
-                min={todayISO()}
-                onChange={(e) => elegirFecha(e.target.value)}
-              />
-            </label>
+            <DateField label="Fecha" value={fecha} min={todayISO()} onChange={elegirFecha} />
           </div>
 
           <div>
