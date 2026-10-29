@@ -62,3 +62,24 @@ describe("Breadcrumbs", () => {
     expect(screen.getByText("Activar cuenta")).toHaveAttribute("aria-current", "page");
   });
 });
+
+describe("Formularios de acceso", () => {
+  it("todos los campos de texto conservan el estilo de campo", async () => {
+    const { default: LoginPage } = await import("../pages/LoginPage");
+    const { default: ActivateAccountPage } = await import("../pages/ActivateAccountPage");
+    const { AuthProvider } = await import("../hooks/useAuth");
+    for (const Pagina of [LoginPage, ActivateAccountPage]) {
+      const { container, unmount } = render(
+        <MemoryRouter>
+          <AuthProvider>
+            <Pagina />
+          </AuthProvider>
+        </MemoryRouter>,
+      );
+      const campos = container.querySelectorAll("input");
+      expect(campos.length).toBeGreaterThan(1);
+      campos.forEach((campo) => expect(campo).toHaveClass("input", "input-bordered", "w-full"));
+      unmount();
+    }
+  });
+});

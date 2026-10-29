@@ -63,7 +63,7 @@ const ActivateAccountPage = () => {
           <span className="label py-1">
             <span className="field-label">Correo registrado en la clínica</span>
           </span>
-          <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input type="email" className="input input-bordered w-full" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
         <PasswordField label="Contraseña" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         <PasswordField label="Repite la contraseña" autoComplete="new-password" value={repetida} onChange={(e) => setRepetida(e.target.value)} />

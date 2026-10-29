@@ -47,7 +47,7 @@ const LoginPage = () => {
           <span className="label py-1">
             <span className="field-label">Usuario o RUT</span>
           </span>
-          <input autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+          <input className="input input-bordered w-full" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} />
         </label>
         <PasswordField label="Contraseña" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         {error && <Notice tone="error">{error}</Notice>}

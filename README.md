@@ -12,7 +12,7 @@ npm install
 npm run dev
 ```
 
-Abre `http://localhost:5173` (requiere el [backend](https://github.com/florenciaPenaSepulveda/dental-clinic-backend) en ejecución). Pruebas con 99 % de cobertura (`npm test`).
+Abre `http://localhost:5173` (requiere el [backend](https://github.com/florenciaPenaSepulveda/dental-clinic-backend) en ejecución). Pruebas con 98 % de cobertura (`npm test`).
 
 ## Repositorios del proyecto
 
@@ -74,7 +74,7 @@ Los comandos están en [Inicio rápido](#inicio-rápido). Disponible en `http://
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` | Compilación de producción |
 | `npm test` | Pruebas |
-| `npm run test:cov` | Pruebas con cobertura (umbral del 80 %; actual 99 %) |
+| `npm run test:cov` | Pruebas con cobertura (umbral del 80 %; actual 98 %) |
 
 ## Estructura
 
