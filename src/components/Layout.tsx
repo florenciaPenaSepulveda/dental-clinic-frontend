@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import Breadcrumbs from "./Breadcrumbs";
 
 const publicLinks = [
   { to: "/", label: "Inicio", end: true },
@@ -37,7 +38,7 @@ export const Navbar = () => {
   const links = enlacesDe(sesion?.rol, sesion?.debe_cambiar_clave);
 
   return (
-    <header className="bg-primary text-primary-content shadow">
+    <header className="sticky top-0 z-30 bg-primary text-primary-content shadow">
       <a
         href="#contenido"
         className="sr-only rounded-btn bg-base-100 px-3 py-2 text-sm font-medium text-primary focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50"
@@ -109,7 +110,8 @@ const Layout = () => {
       primeraCarga.current = false;
       return;
     }
-    principal.current?.focus();
+    window.scrollTo({ top: 0 });
+    principal.current?.focus({ preventScroll: true });
   }, [pathname]);
 
   return (
@@ -117,6 +119,7 @@ const Layout = () => {
       <AvisoDemo />
       <Navbar />
       <main ref={principal} id="contenido" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 focus:outline-none">
+        <Breadcrumbs />
         <Outlet />
       </main>
       <Footer />

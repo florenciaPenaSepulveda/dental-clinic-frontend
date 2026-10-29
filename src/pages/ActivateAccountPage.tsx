@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
+import PasswordField from "../components/PasswordField";
 import { Notice } from "../components/States";
 import { useAuth } from "../hooks/useAuth";
 import { formatRut, isValidRut } from "../lib/rut";
@@ -62,20 +63,10 @@ const ActivateAccountPage = () => {
           <span className="label py-1">
             <span className="field-label">Correo registrado en la clínica</span>
           </span>
-          <input type="email" className="input input-bordered w-full" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
-        <label className="form-control">
-          <span className="label py-1">
-            <span className="field-label">Contraseña</span>
-          </span>
-          <input type="password" className="input input-bordered w-full" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        </label>
-        <label className="form-control">
-          <span className="label py-1">
-            <span className="field-label">Repite la contraseña</span>
-          </span>
-          <input type="password" className="input input-bordered w-full" autoComplete="new-password" value={repetida} onChange={(e) => setRepetida(e.target.value)} />
-        </label>
+        <PasswordField label="Contraseña" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordField label="Repite la contraseña" autoComplete="new-password" value={repetida} onChange={(e) => setRepetida(e.target.value)} />
         {error && <Notice tone="error">{error}</Notice>}
         <button type="submit" className="btn btn-primary w-full" disabled={enviando}>
           {enviando && <span className="loading loading-spinner loading-sm" />}

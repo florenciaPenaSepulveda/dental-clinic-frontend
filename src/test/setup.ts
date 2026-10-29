@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { afterEach } from "vitest";
+import { afterEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 
 afterEach(() => {
@@ -12,3 +12,5 @@ HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogEleme
 HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
   this.removeAttribute("open");
 };
+
+window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;

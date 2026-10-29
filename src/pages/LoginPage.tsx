@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
+import PasswordField from "../components/PasswordField";
 import { Notice } from "../components/States";
 import { useAuth } from "../hooks/useAuth";
 
@@ -46,20 +47,9 @@ const LoginPage = () => {
           <span className="label py-1">
             <span className="field-label">Usuario o RUT</span>
           </span>
-          <input className="input input-bordered w-full" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+          <input autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} />
         </label>
-        <label className="form-control">
-          <span className="label py-1">
-            <span className="field-label">Contraseña</span>
-          </span>
-          <input
-            type="password"
-            className="input input-bordered w-full"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
+        <PasswordField label="Contraseña" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         {error && <Notice tone="error">{error}</Notice>}
         <button type="submit" className="btn btn-primary w-full" disabled={enviando}>
           {enviando && <span className="loading loading-spinner loading-sm" />}

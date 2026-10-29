@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import PageHeader from "../components/PageHeader";
+import PasswordField from "../components/PasswordField";
 import { Notice } from "../components/States";
 import { useAuth } from "../hooks/useAuth";
 
@@ -52,24 +53,9 @@ const MiCuentaPage = () => {
       <form onSubmit={enviar} className="surface mx-auto max-w-md space-y-4">
         <h2 className="section-title">Cambiar contraseña</h2>
         {sesion?.debe_cambiar_clave && <Notice tone="info">Tu contraseña es temporal. Debes cambiarla para poder usar el sistema.</Notice>}
-        <label className="form-control">
-          <span className="label py-1">
-            <span className="field-label">Contraseña actual</span>
-          </span>
-          <input type="password" className="input input-bordered w-full" autoComplete="current-password" value={actual} onChange={(e) => setActual(e.target.value)} />
-        </label>
-        <label className="form-control">
-          <span className="label py-1">
-            <span className="field-label">Nueva contraseña</span>
-          </span>
-          <input type="password" className="input input-bordered w-full" autoComplete="new-password" value={nueva} onChange={(e) => setNueva(e.target.value)} />
-        </label>
-        <label className="form-control">
-          <span className="label py-1">
-            <span className="field-label">Repite la nueva contraseña</span>
-          </span>
-          <input type="password" className="input input-bordered w-full" autoComplete="new-password" value={repetida} onChange={(e) => setRepetida(e.target.value)} />
-        </label>
+        <PasswordField label="Contraseña actual" autoComplete="current-password" value={actual} onChange={(e) => setActual(e.target.value)} />
+        <PasswordField label="Nueva contraseña" autoComplete="new-password" value={nueva} onChange={(e) => setNueva(e.target.value)} />
+        <PasswordField label="Repite la nueva contraseña" autoComplete="new-password" value={repetida} onChange={(e) => setRepetida(e.target.value)} />
         {aviso && <Notice tone={aviso.tone}>{aviso.text}</Notice>}
         <button type="submit" className="btn btn-primary w-full" disabled={enviando}>
           {enviando && <span className="loading loading-spinner loading-sm" />}
