@@ -1,10 +1,12 @@
 import { ChangeEvent, useEffect, useId, useRef, useState } from "react";
 import { formatFecha, parseFecha } from "../lib/format";
+import { HelpTip } from "./HelpTip";
 
 interface Props {
   label: string;
   value: string;
   min?: string;
+  help?: string;
   onChange: (iso: string) => void;
 }
 
@@ -32,7 +34,7 @@ const CalendarIcon = () => (
   </svg>
 );
 
-const DateField = ({ label, value, min, onChange }: Props) => {
+const DateField = ({ label, value, min, help, onChange }: Props) => {
   const id = useId();
   const selector = useRef<HTMLInputElement>(null);
   const [texto, setTexto] = useState(formatFecha(value));
@@ -63,9 +65,12 @@ const DateField = ({ label, value, min, onChange }: Props) => {
 
   return (
     <div className="form-control">
-      <label htmlFor={id} className="label py-1">
-        <span className="field-label">{label}</span>
-      </label>
+      <div className="label justify-start gap-1.5 py-1">
+        <label htmlFor={id} className="field-label">
+          {label}
+        </label>
+        {help && <HelpTip texto={help} />}
+      </div>
       <div className="relative">
         <input
           id={id}

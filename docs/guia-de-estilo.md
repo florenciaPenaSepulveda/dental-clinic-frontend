@@ -48,3 +48,7 @@ DD/MM/AAAA en todo el sistema, con `formatFecha`. La fecha larga con día de la 
 ## Color
 
 Solo colores del tema (`primary`, `neutral`, `success`, `warning`, `error`, `info` y las bases). No se usan colores sueltos de Tailwind.
+
+## Ayuda contextual
+
+Los campos que necesitan una explicación llevan un `?` junto a la etiqueta (`HelpTip`, o la prop `help` de `Field` y `DateField`): al pasar el mouse o enfocarlo con el teclado muestra el texto, y los lectores de pantalla lo leen como descripción. Las secciones con reglas más largas tienen un `?` (`HelpButton`) junto al título que abre una ventana con la explicación completa, como `AyudaGenerarModal`.

@@ -93,26 +93,26 @@ const EquipoPage = () => {
           <EmptyState title="Aún no hay dentistas" description="Registra al primer dentista para poder generar su agenda." />
         ) : (
           <div className="overflow-x-auto">
-            <table className="table">
+            <table className="table min-w-[1040px] table-fixed">
               <thead>
                 <tr className="text-xs uppercase text-base-content/70">
-                  <th>Nombre</th>
-                  <th>Especialidad</th>
+                  <th className="w-[18%]">Nombre</th>
+                  <th className="w-[16%]">Especialidad</th>
                   <th>Correo</th>
-                  <th>Teléfono</th>
-                  <th>Acceso</th>
-                  <th><span className="sr-only">Acciones</span></th>
+                  <th className="w-36">Teléfono</th>
+                  <th className="w-32">Acceso</th>
+                  <th className="w-64"><span className="sr-only">Acciones</span></th>
                 </tr>
               </thead>
               <tbody>
                 {lista.map((dentista) => (
                   <tr key={dentista.id} className="hover">
-                    <td className="font-medium text-neutral">{nombreCompleto(dentista)}</td>
-                    <td>{dentista.especialidad || "-"}</td>
-                    <td>{dentista.email || "-"}</td>
-                    <td>{dentista.telefono || "-"}</td>
+                    <td className="truncate font-medium text-neutral" title={nombreCompleto(dentista)}>{nombreCompleto(dentista)}</td>
+                    <td className="truncate" title={dentista.especialidad || undefined}>{dentista.especialidad || "-"}</td>
+                    <td className="truncate" title={dentista.email || undefined}>{dentista.email || "-"}</td>
+                    <td className="whitespace-nowrap tabular-nums">{dentista.telefono || "-"}</td>
                     <td>
-                      <span className={`badge ${dentista.tiene_cuenta ? "badge-success" : "badge-ghost"}`}>
+                      <span className={`badge whitespace-nowrap ${dentista.tiene_cuenta ? "badge-success" : "badge-ghost"}`}>
                         {dentista.tiene_cuenta ? "Con cuenta" : "Sin cuenta"}
                       </span>
                     </td>

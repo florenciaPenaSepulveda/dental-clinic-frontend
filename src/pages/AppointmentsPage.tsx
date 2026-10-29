@@ -3,7 +3,9 @@ import { api } from "../api/client";
 import type { EstadoReserva, Paciente, Reserva, SlotSemana } from "../api/types";
 import AgendarModal from "../components/AgendarModal";
 import HistorialPacienteModal from "../components/HistorialPacienteModal";
+import AyudaGenerarModal from "../components/AyudaGenerarModal";
 import DateField from "../components/DateField";
+import { Field, HelpButton } from "../components/HelpTip";
 import PageHeader from "../components/PageHeader";
 import ReservaModal from "../components/ReservaModal";
 import { EmptyState, Notice, Spinner } from "../components/States";
@@ -20,6 +22,12 @@ const estiloDelEstado: Record<EstadoReserva, string> = {
   no_asistio: "border-warning/50 bg-warning/10",
 };
 
+const mensajeDeGeneracion = (creados: number, existentes: number): string => {
+  if (creados === 0) return "No se creó ningún horario nuevo: esos horarios ya existían.";
+  const nuevos = `Se crearon ${creados} ${creados === 1 ? "horario nuevo" : "horarios nuevos"}.`;
+  return existentes > 0 ? `${nuevos} ${existentes} ya existían.` : nuevos;
+};
+
 const hayCupo = (slot: SlotSemana): boolean => slot.reservas.length < slot.capacidad + slot.max_overbook;
 
 const AppointmentsPage = () => {
@@ -34,6 +42,7 @@ const AppointmentsPage = () => {
   const [historialDe, setHistorialDe] = useState<Paciente | null>(null);
   const [aviso, setAviso] = useState<Aviso>(null);
 
+  const [ayudaAbierta, setAyudaAbierta] = useState(false);
   const [generar, setGenerar] = useState({ dentista: dentistaPropio, fecha: todayISO(1), desde: "08:00", hasta: "16:00", dias: "1" });
   const [generando, setGenerando] = useState(false);
   const [avisoGenerar, setAvisoGenerar] = useState<Aviso>(null);
@@ -78,7 +87,7 @@ const AppointmentsPage = () => {
         hasta: generar.hasta,
         dias: Number(generar.dias) || 1,
       });
-      setAvisoGenerar({ tone: "success", text: `Se prepararon ${resultado.created} horarios.` });
+      setAvisoGenerar({ tone: "success", text: mensajeDeGeneracion(resultado.created, resultado.existing ?? 0) });
       semana.reload();
     } catch (error) {
       setAvisoGenerar({ tone: "error", text: error instanceof Error ? error.message : "No se pudieron generar los horarios." });
@@ -208,46 +217,52 @@ const AppointmentsPage = () => {
       </section>
 
       <section className="surface h-fit">
-        <h2 className="section-title mb-3">Generar horarios</h2>
-        <p className="mb-4 text-base-content/70">Crea bloques de 30 minutos para un dentista, desde la hora inicial hasta la final, en tantos días seguidos como indiques. Los sábados y domingos también cuentan, y los horarios que ya existen no se duplican.</p>
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="section-title">Generar horarios</h2>
+          <HelpButton label="Cómo funciona Generar horarios" onClick={() => setAyudaAbierta(true)} />
+        </div>
+        <p className="mb-4 text-base-content/70">Crea los horarios libres de un dentista: bloques de 30 minutos entre la hora inicial y la final, en días seguidos.</p>
         <form onSubmit={generarHorarios} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <label className="form-control">
-            <span className="label py-1">
-              <span className="field-label">Dentista</span>
-            </span>
-            <select
-              className="select select-bordered w-full"
-              aria-label="Dentista para generar horarios"
-              value={generar.dentista}
-              onChange={(e) => setGenerar({ ...generar, dentista: e.target.value })}
-            >
-              <option value="">Selecciona un dentista</option>
-              {visibles.map((dentista) => (
-                <option key={dentista.id} value={dentista.id}>
-                  {nombreCompleto(dentista)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <DateField label="Desde el día" value={generar.fecha} min={todayISO()} onChange={(fecha) => setGenerar({ ...generar, fecha })} />
-          <label className="form-control">
-            <span className="label py-1">
-              <span className="field-label">Cantidad de días</span>
-            </span>
-            <input type="number" min={1} max={31} className="input input-bordered w-full" value={generar.dias} onChange={(e) => setGenerar({ ...generar, dias: e.target.value })} />
-          </label>
-          <label className="form-control">
-            <span className="label py-1">
-              <span className="field-label">Hora inicial</span>
-            </span>
-            <input type="time" className="input input-bordered w-full" value={generar.desde} onChange={(e) => setGenerar({ ...generar, desde: e.target.value })} />
-          </label>
-          <label className="form-control">
-            <span className="label py-1">
-              <span className="field-label">Hora final</span>
-            </span>
-            <input type="time" className="input input-bordered w-full" value={generar.hasta} onChange={(e) => setGenerar({ ...generar, hasta: e.target.value })} />
-          </label>
+          <Field label="Dentista" help="De quién es la agenda donde se crean los horarios. Un dentista solo puede generar los suyos.">
+            {(id) => (
+              <select
+                id={id}
+                aria-label="Dentista para generar horarios"
+                className="select select-bordered w-full"
+                value={generar.dentista}
+                onChange={(e) => setGenerar({ ...generar, dentista: e.target.value })}
+              >
+                <option value="">Selecciona un dentista</option>
+                {visibles.map((dentista) => (
+                  <option key={dentista.id} value={dentista.id}>
+                    {nombreCompleto(dentista)}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+          <DateField
+            label="Desde el día"
+            help="Primer día en que se crean horarios. No puede ser anterior a hoy."
+            value={generar.fecha}
+            min={todayISO()}
+            onChange={(fecha) => setGenerar({ ...generar, fecha })}
+          />
+          <Field label="Cantidad de días" help="Cuántos días seguidos se generan, contando desde el día elegido. Los sábados y domingos también cuentan.">
+            {(id) => (
+              <input id={id} type="number" min={1} max={31} className="input input-bordered w-full" value={generar.dias} onChange={(e) => setGenerar({ ...generar, dias: e.target.value })} />
+            )}
+          </Field>
+          <Field label="Hora inicial" help="Hora en que empieza la primera cita de cada día. Entre 08:00 y 17:30, en bloques de 30 minutos.">
+            {(id) => (
+              <input id={id} type="time" step={1800} className="input input-bordered w-full" value={generar.desde} onChange={(e) => setGenerar({ ...generar, desde: e.target.value })} />
+            )}
+          </Field>
+          <Field label="Hora final" help="Hora en que termina la última cita. Con 12:00, la última cita empieza a las 11:30. Máximo 18:00.">
+            {(id) => (
+              <input id={id} type="time" step={1800} className="input input-bordered w-full" value={generar.hasta} onChange={(e) => setGenerar({ ...generar, hasta: e.target.value })} />
+            )}
+          </Field>
           <div className="sm:col-span-2 lg:col-span-5">
             {avisoGenerar && <Notice tone={avisoGenerar.tone}>{avisoGenerar.text}</Notice>}
             <button type="submit" className="btn btn-primary mt-3" disabled={generando}>
@@ -257,6 +272,8 @@ const AppointmentsPage = () => {
           </div>
         </form>
       </section>
+
+      <AyudaGenerarModal open={ayudaAbierta} onClose={() => setAyudaAbierta(false)} />
 
       <AgendarModal
         slot={aAgendar}

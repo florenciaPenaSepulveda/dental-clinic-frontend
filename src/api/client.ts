@@ -159,7 +159,7 @@ export const api = {
     request<Sesion>("/auth/activar-cuenta/", { method: "POST", body: JSON.stringify({ rut, email, password }) }),
   cancelarReserva: (id: number) => request<void>(`/api/reservas/${id}/`, { method: "DELETE" }),
   generarSlots: (dentistaId: number, data: GenerarSlotsInput) =>
-    request<{ created: number }>(`/dentistas/${dentistaId}/generar_slots/`, {
+    request<{ created: number; existing: number }>(`/dentistas/${dentistaId}/generar_slots/`, {
       method: "POST",
       body: JSON.stringify(data),
     }),

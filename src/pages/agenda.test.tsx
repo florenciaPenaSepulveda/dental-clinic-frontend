@@ -417,15 +417,38 @@ describe("Atención clínica del dentista", () => {
 describe("Generar horarios", () => {
   it("genera horarios para un dentista", async () => {
     const user = userEvent.setup();
-    mocked.generarSlots.mockResolvedValue({ created: 17 });
+    mocked.generarSlots.mockResolvedValue({ created: 17, existing: 0 });
     renderAgenda();
     await screen.findAllByRole("option", { name: "Ana Pérez" });
     await user.click(screen.getByRole("button", { name: "Generar horarios" }));
     expect(screen.getByText("Elige un dentista.")).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText("Dentista para generar horarios"), "1");
     await user.click(screen.getByRole("button", { name: "Generar horarios" }));
-    expect(await screen.findByText("Se prepararon 17 horarios.")).toBeInTheDocument();
+    expect(await screen.findByText("Se crearon 17 horarios nuevos.")).toBeInTheDocument();
     expect(mocked.generarSlots).toHaveBeenCalledWith(1, expect.objectContaining({ desde: "08:00", hasta: "16:00", dias: 1 }));
+  });
+
+  it("distingue los horarios nuevos de los que ya existían", async () => {
+    const user = userEvent.setup();
+    mocked.generarSlots.mockResolvedValueOnce({ created: 2, existing: 6 }).mockResolvedValueOnce({ created: 0, existing: 8 });
+    renderAgenda();
+    await screen.findAllByRole("option", { name: "Ana Pérez" });
+    await user.selectOptions(screen.getByLabelText("Dentista para generar horarios"), "1");
+    await user.click(screen.getByRole("button", { name: "Generar horarios" }));
+    expect(await screen.findByText("Se crearon 2 horarios nuevos. 6 ya existían.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Generar horarios" }));
+    expect(await screen.findByText("No se creó ningún horario nuevo: esos horarios ya existían.")).toBeInTheDocument();
+  });
+
+  it("explica cada campo y abre la ayuda completa", async () => {
+    const user = userEvent.setup();
+    renderAgenda();
+    await screen.findAllByRole("option", { name: "Ana Pérez" });
+    const ayudaDe = (campo: string) => within(screen.getByLabelText(campo).closest(".form-control") as HTMLElement).getByRole("button", { name: "Ayuda" });
+    expect(ayudaDe("Cantidad de días")).toHaveAccessibleDescription(/sábados y domingos también cuentan/);
+    expect(ayudaDe("Hora final")).toHaveAccessibleDescription(/última cita empieza a las 11:30/);
+    await user.click(screen.getByRole("button", { name: "Cómo funciona Generar horarios" }));
+    expect(screen.getByRole("dialog", { name: "Cómo funciona Generar horarios" })).toHaveTextContent("40 horarios en total");
   });
 
   it("informa los errores al generar horarios", async () => {
