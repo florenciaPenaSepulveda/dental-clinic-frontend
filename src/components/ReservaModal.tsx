@@ -52,7 +52,7 @@ const Detalle = ({ inicial, slots, servicios, rol, conflicto, onClose, onCambio,
   const [ocupado, setOcupado] = useState(false);
 
   const esDentista = rol === "dentista";
-  const destinos = slots.filter((slot) => slot.id !== actual.slot.id && slot.reservas.length < slot.capacidad + slot.max_overbook);
+  const destinos = slots.filter((slot) => slot.id !== actual.slot.id && slot.reservas.filter((reserva) => !reserva.sobrecupo).length < slot.capacidad);
 
   const ejecutar = async (accion: () => Promise<void>, exito: string, falla: string) => {
     setOcupado(true);

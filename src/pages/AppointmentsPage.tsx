@@ -8,6 +8,7 @@ import AyudaGenerarModal from "../components/AyudaGenerarModal";
 import DateField from "../components/DateField";
 import { Field, HelpButton } from "../components/HelpTip";
 import PageHeader from "../components/PageHeader";
+import SobrecuposPanel from "../components/SobrecuposPanel";
 import ReservaModal from "../components/ReservaModal";
 import { EmptyState, Notice, Spinner } from "../components/States";
 import { useAuth } from "../hooks/useAuth";
@@ -29,7 +30,9 @@ const mensajeDeGeneracion = (creados: number, existentes: number): string => {
   return existentes > 0 ? `${nuevos} ${existentes} ya existían.` : nuevos;
 };
 
-const hayCupo = (slot: SlotSemana): boolean => slot.reservas.length < slot.capacidad + slot.max_overbook;
+const principalesDe = (slot: SlotSemana): number => slot.reservas.filter((reserva) => !reserva.sobrecupo).length;
+
+const estaCompleto = (slot: SlotSemana): boolean => principalesDe(slot) >= slot.capacidad;
 
 const esFecha = (valor: string | null): valor is string => valor !== null && /^\d{4}-\d{2}-\d{2}$/.test(valor);
 
@@ -44,6 +47,7 @@ const AppointmentsPage = () => {
   const [lunes, setLunes] = useState(() => lunesDe(esFecha(fechaPedida) ? fechaPedida : todayISO()));
   const [dentistaId, setDentistaId] = useState(dentistaPropio || (dentistaPedido && /^\d+$/.test(dentistaPedido) ? dentistaPedido : ""));
   const [aAgendar, setAAgendar] = useState<SlotSemana | null>(null);
+  const [comoSobrecupo, setComoSobrecupo] = useState(false);
   const [abierta, setAbierta] = useState<Reserva | null>(null);
   const [historialDe, setHistorialDe] = useState<Paciente | null>(null);
   const [aviso, setAviso] = useState<Aviso>(null);
@@ -59,6 +63,11 @@ const AppointmentsPage = () => {
     [lunes, dentistaId],
   );
 
+  const sobrecupos = useLoad(
+    () => (dentistaId ? api.sobrecupos(Number(dentistaId), lunes) : Promise.resolve(null)),
+    [lunes, dentistaId],
+  );
+
   const [dentistas, servicios] = catalogos.data ?? [[], []];
   const slots = semana.data ?? [];
   const visibles = esDentista ? dentistas.filter((dentista) => String(dentista.id) === dentistaPropio) : dentistas;
@@ -66,6 +75,26 @@ const AppointmentsPage = () => {
   const dias = diasDeLaSemana(lunes).filter((dia, indice) => indice < 5 || slots.some((slot) => slot.fecha === dia));
   const horas = [...new Set(slots.map((slot) => formatHora(slot.hora)))].sort();
   const hoy = todayISO();
+
+  const fijarSobrecupos = async (fecha: string | null, cupos: number | null) => {
+    try {
+      await api.fijarSobrecupos({ dentista: Number(dentistaId), ...(fecha ? { fecha } : {}), cupos });
+      sobrecupos.reload();
+    } catch (error) {
+      setAviso({ tone: "error", text: error instanceof Error ? error.message : "No se pudieron cambiar los sobrecupos." });
+    }
+  };
+
+  const sobrecupoDisponible = (slot: SlotSemana): boolean => {
+    const dia = sobrecupos.data?.dias.find((candidato) => candidato.fecha === slot.fecha);
+    const tiene = slot.reservas.some((reserva) => reserva.sobrecupo);
+    return estaCompleto(slot) && !tiene && !slot.bloqueado && !!dia && dia.usados < dia.permitidos;
+  };
+
+  const agendar = (slot: SlotSemana, sobrecupo: boolean) => {
+    setComoSobrecupo(sobrecupo);
+    setAAgendar(slot);
+  };
 
   const cambiarSemana = (dias: number) => setLunes((actual) => sumarDias(actual, dias));
 
@@ -123,26 +152,36 @@ const AppointmentsPage = () => {
             key={reserva.id}
             type="button"
             aria-label={`Reserva de ${nombreCompleto(reserva.paciente)} ${etiquetaDia(dia)} ${hora}`}
-            className={`w-full rounded-btn border px-2 py-1 text-left text-xs transition hover:shadow ${choque ? "border-error bg-error/10" : estiloDelEstado[reserva.estado]}`}
+            className={`w-full rounded-btn border px-2 py-1 text-left text-xs transition hover:shadow ${choque ? "border-error bg-error/10" : reserva.sobrecupo ? "border-dashed border-warning bg-warning/10" : estiloDelEstado[reserva.estado]}`}
             onClick={() => abrirReserva(reserva)}
           >
             <span className="block truncate font-semibold text-neutral">{nombreCompleto(reserva.paciente)}</span>
             <span className="block truncate text-[11px] text-base-content/70">
               {reserva.servicio?.nombre ?? "Sin servicio"}
-              {reserva.sobrecupo ? " · sobrecupo" : ""}
             </span>
+            {reserva.sobrecupo && <span className="badge badge-warning mt-1 whitespace-nowrap">Sobrecupo</span>}
             {choque && <span className="block text-[11px] font-semibold text-error">Choque de horario</span>}
           </button>
           );
         })}
-        {hayCupo(slot) && !slot.bloqueado && (
+        {!estaCompleto(slot) && !slot.bloqueado && (
           <button
             type="button"
             aria-label={`Agendar ${etiquetaDia(dia)} ${hora}`}
             className="btn btn-outline btn-primary btn-xs w-full"
-            onClick={() => setAAgendar(slot)}
+            onClick={() => agendar(slot, false)}
           >
-            {slot.reservas.length === 0 ? "Libre" : "+ Agregar"}
+            {principalesDe(slot) === 0 ? "Libre" : "+ Agregar"}
+          </button>
+        )}
+        {sobrecupoDisponible(slot) && (
+          <button
+            type="button"
+            aria-label={`Agendar sobrecupo ${etiquetaDia(dia)} ${hora}`}
+            className="btn btn-outline btn-warning btn-xs w-full"
+            onClick={() => agendar(slot, true)}
+          >
+            + Sobrecupo
           </button>
         )}
       </div>
@@ -233,6 +272,16 @@ const AppointmentsPage = () => {
         )}
       </section>
 
+      {dentistaId && (
+        <SobrecuposPanel
+          resumen={sobrecupos.data ?? null}
+          cargando={sobrecupos.loading}
+          error={sobrecupos.error}
+          hoy={hoy}
+          onFijar={fijarSobrecupos}
+        />
+      )}
+
       <section className="surface h-fit">
         <div className="mb-3 flex items-center gap-2">
           <h2 className="section-title">Generar horarios</h2>
@@ -294,8 +343,9 @@ const AppointmentsPage = () => {
 
       <AgendarModal
         slot={aAgendar}
-        titulo={aAgendar ? `Agendar ${etiquetaDiaCompleta(aAgendar.fecha)} · ${formatHora(aAgendar.hora)}` : "Agendar"}
+        titulo={aAgendar ? `Agendar ${comoSobrecupo ? "sobrecupo " : ""}${etiquetaDiaCompleta(aAgendar.fecha)} · ${formatHora(aAgendar.hora)}` : "Agendar"}
         servicios={servicios}
+        sobrecupo={comoSobrecupo}
         onClose={() => setAAgendar(null)}
         onCreada={(sobrecupo) => {
           setAAgendar(null);

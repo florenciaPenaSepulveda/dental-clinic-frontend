@@ -33,6 +33,18 @@ export interface Servicio {
 
 export type ServicioInput = Omit<Servicio, "id">;
 
+export interface DiaSobrecupo {
+  fecha: string;
+  permitidos: number;
+  usados: number;
+  personalizado: boolean;
+}
+
+export interface ResumenSobrecupos {
+  por_defecto: number;
+  dias: DiaSobrecupo[];
+}
+
 export type MotivoConflicto = "superpuesta" | "excede";
 
 export interface ConflictoDeServicio {
@@ -85,7 +97,6 @@ export interface Slot {
   fecha: string;
   hora: string;
   capacidad: number;
-  max_overbook: number;
 }
 
 export interface SlotDisponible extends Slot {
@@ -93,6 +104,7 @@ export interface SlotDisponible extends Slot {
   sobrecupos_count: number;
   bloqueado: boolean;
   cabe: boolean;
+  sobrecupo_disponible: boolean;
 }
 
 export type Rol = "recepcion" | "dentista" | "paciente";
@@ -134,7 +146,6 @@ export interface SlotSemana {
   fecha: string;
   hora: string;
   capacidad: number;
-  max_overbook: number;
   reservas: Reserva[];
   bloqueado: boolean;
   conflictos: { reserva: number; motivo: MotivoConflicto }[];
@@ -164,6 +175,7 @@ export interface ReservaInput {
   paciente: number;
   servicio?: number;
   motivo?: string;
+  sobrecupo?: boolean;
 }
 
 export interface ReservaCambios {

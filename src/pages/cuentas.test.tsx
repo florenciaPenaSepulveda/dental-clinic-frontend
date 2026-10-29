@@ -92,8 +92,8 @@ describe("Equipo", () => {
     await user.type(form.getByLabelText("Especialidad"), "Periodoncia");
     await user.type(form.getByLabelText("Correo electrónico"), "s@clinica.cl");
     await user.type(form.getByLabelText("Teléfono"), "999");
-    await user.clear(form.getByLabelText("Sobrecupos máximos por día"));
-    await user.type(form.getByLabelText("Sobrecupos máximos por día"), "2");
+    await user.clear(form.getByLabelText("Sobrecupos por día (por defecto)"));
+    await user.type(form.getByLabelText("Sobrecupos por día (por defecto)"), "2");
     await user.click(form.getByRole("button", { name: "Registrar", hidden: true }));
     expect(await screen.findByText(/Dentista registrado/)).toBeInTheDocument();
     expect(mocked.crearDentista).toHaveBeenCalledWith({

@@ -30,22 +30,22 @@ export const paciente: Paciente = {
 
 export const pacienteSinContacto: Paciente = { ...paciente, id: 2, rut: "11.111.111-1", nombre: "Marta", apellido: "Ríos", telefono: "", email: "" };
 
-export const slot = (id: number, hora: string, capacidad = 1, max_overbook = 0): Slot => ({
+export const slot = (id: number, hora: string, capacidad = 1): Slot => ({
   id,
   dentista: "Ana Pérez - Ortodoncia",
   servicio: null,
   fecha: "2026-10-25",
   hora,
   capacidad,
-  max_overbook,
 });
 
-export const disponible = (id: number, hora: string, capacidad = 1, max_overbook = 0, reservas_count = 0, sobrecupos_count = 0): SlotDisponible => ({
-  ...slot(id, hora, capacidad, max_overbook),
+export const disponible = (id: number, hora: string, capacidad = 1, reservas_count = 0, sobrecupos_count = 0, sobrecupo_disponible = false): SlotDisponible => ({
+  ...slot(id, hora, capacidad),
   reservas_count,
   sobrecupos_count,
   bloqueado: false,
   cabe: true,
+  sobrecupo_disponible,
 });
 
 export const reserva = (id: number, slotId: number, sobrecupo = false): Reserva => ({
@@ -79,13 +79,12 @@ export const atencion: Atencion = {
   actualizado_en: "2026-10-24T10:00:00Z",
 };
 
-export const slotSemana = (id: number, fecha: string, hora: string, reservas: Reserva[] = [], capacidad = 1, max_overbook = 0): SlotSemana => ({
+export const slotSemana = (id: number, fecha: string, hora: string, reservas: Reserva[] = [], capacidad = 1): SlotSemana => ({
   id,
   dentista: 1,
   fecha,
   hora,
   capacidad,
-  max_overbook,
   reservas,
   bloqueado: false,
   conflictos: [],

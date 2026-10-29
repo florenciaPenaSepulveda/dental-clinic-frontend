@@ -14,15 +14,16 @@ import { validarArchivos } from "../lib/archivos";
 
 type Estado = "disponible" | "sobrecupo" | "lleno" | "bloqueado" | "no_cabe";
 
-const estadoDelSlot = (slot: SlotDisponible): { estado: Estado; cupos: number } => {
+const estadoDelSlot = (slot: SlotDisponible, esPersonal: boolean): { estado: Estado; cupos: number } => {
   if (slot.bloqueado) {
     return { estado: "bloqueado", cupos: 0 };
   }
-  if (slot.reservas_count < slot.capacidad) {
-    return { estado: "disponible", cupos: slot.capacidad - slot.reservas_count };
+  const principales = slot.reservas_count - slot.sobrecupos_count;
+  if (principales < slot.capacidad) {
+    return { estado: "disponible", cupos: slot.capacidad - principales };
   }
-  if (slot.sobrecupos_count < slot.max_overbook) {
-    return { estado: "sobrecupo", cupos: slot.max_overbook - slot.sobrecupos_count };
+  if (esPersonal && slot.sobrecupo_disponible) {
+    return { estado: "sobrecupo", cupos: 1 };
   }
   return { estado: "lleno", cupos: 0 };
 };
@@ -41,7 +42,7 @@ const tituloDelSlot = (estado: Estado, cupos: number): string => {
   if (estado === "lleno") return "Horario completo";
   if (estado === "bloqueado") return "Ocupado por la duración de una cita anterior";
   if (estado === "no_cabe") return "No hay tiempo suficiente para el servicio elegido";
-  return estado === "sobrecupo" ? `Sobrecupo (${cupos})` : `${cupos} cupo(s)`;
+  return estado === "sobrecupo" ? "Sobrecupo: se agenda por sobre la capacidad del horario" : `${cupos} cupo(s)`;
 };
 
 const ReservationPage = () => {
@@ -51,6 +52,7 @@ const ReservationPage = () => {
   const [slotId, setSlotId] = useState<number | null>(null);
   const seleccion = usePacienteSelector();
   const { sesion } = useAuth();
+  const esPersonal = sesion?.rol === "recepcion" || sesion?.rol === "dentista";
   const pacienteConSesion = sesion?.rol === "paciente" && sesion.paciente_id ? sesion : null;
   const [motivo, setMotivo] = useState("");
   const [archivos, setArchivos] = useState<File[]>([]);
@@ -101,10 +103,13 @@ const ReservationPage = () => {
     setAviso(null);
     try {
       const paciente = pacienteConSesion ? (pacienteConSesion.paciente_id as number) : await seleccion.resolver();
+      const aReservar = slots.find((slot) => slot.id === slotId);
+      const comoSobrecupo = aReservar ? estadoDelSlot(aReservar, esPersonal).estado === "sobrecupo" : false;
       const creada = await api.crearReserva(
         {
           slot: slotId as number,
           paciente,
+          ...(comoSobrecupo ? { sobrecupo: true } : {}),
           ...(servicioId ? { servicio: Number(servicioId) } : {}),
           ...(motivo.trim() ? { motivo: motivo.trim() } : {}),
         },
@@ -193,7 +198,7 @@ const ReservationPage = () => {
               <>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
                   {slots.map((slot) => {
-                    const base = estadoDelSlot(slot);
+                    const base = estadoDelSlot(slot, esPersonal);
                     const estado = conServicio(slot, base.estado);
                     const cupos = base.cupos;
                     const seleccionado = slotId === slot.id;
@@ -213,7 +218,7 @@ const ReservationPage = () => {
                   })}
                 </div>
                 <p className="mt-3 hint">
-                  Verde: disponible · Ámbar: solo sobrecupo · Gris: completo, ocupado por una cita anterior o sin tiempo suficiente para el servicio elegido. {formatFecha(fecha)}.
+                  Verde: disponible · {esPersonal ? "Ámbar: sobrecupo · " : ""}Gris: completo, ocupado por una cita anterior o sin tiempo suficiente para el servicio elegido. {formatFecha(fecha)}.
                 </p>
               </>
             )}

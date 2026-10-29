@@ -83,9 +83,11 @@ export const Footer = () => (
 // Solo en el sitio de demostración (VITE_DEMO=true al compilar): avisa que los datos son ficticios y se reinician.
 export const AvisoDemo = () =>
   esDemo() ? (
-    <div role="note" className="border-b border-warning/50 bg-warning/20 px-4 py-2 text-center text-sm text-neutral">
-      <strong>Demostración:</strong> los datos son ficticios y se borran cuando el servidor se reinicia (tras unos 15 minutos sin uso o al
-      actualizar la demo), incluidas las cuentas y reservas que crees. No ingreses datos reales.
+    <div role="note" className="border-b border-warning bg-base-100">
+      <p className="bg-warning/20 px-4 py-2 text-center text-sm text-neutral">
+        <strong>Demostración:</strong> los datos son ficticios y se borran cuando el servidor se reinicia (tras unos 15 minutos sin uso o al
+        actualizar la demo), incluidas las cuentas y reservas que crees. No ingreses datos reales.
+      </p>
     </div>
   ) : null;
 

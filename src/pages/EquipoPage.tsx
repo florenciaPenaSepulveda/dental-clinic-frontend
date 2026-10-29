@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { api } from "../api/client";
 import type { Dentista, DentistaInput } from "../api/types";
 import CuentaModal from "../components/CuentaModal";
+import { Field } from "../components/HelpTip";
 import Modal from "../components/Modal";
 import PageHeader from "../components/PageHeader";
 import { EmptyState, Notice, Spinner } from "../components/States";
@@ -170,18 +171,22 @@ const EquipoPage = () => {
               <input className="input input-bordered w-full" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} />
             </label>
           </div>
-          <label className="form-control">
-            <span className="label py-1">
-              <span className="field-label">Sobrecupos máximos por día</span>
-            </span>
-            <input
-              type="number"
-              min={0}
-              className="input input-bordered w-full"
-              value={form.max_overbook_day}
-              onChange={(e) => setForm({ ...form, max_overbook_day: Math.max(0, Number(e.target.value) || 0) })}
-            />
-          </label>
+          <Field
+            label="Sobrecupos por día (por defecto)"
+            help="Citas extra que el dentista admite cada día en horarios ya completos. El propio dentista o recepción pueden cambiarlo para una fecha en particular desde la agenda."
+          >
+            {(id) => (
+              <input
+                id={id}
+                type="number"
+                min={0}
+                max={10}
+                className="input input-bordered w-full"
+                value={form.max_overbook_day}
+                onChange={(e) => setForm({ ...form, max_overbook_day: Math.min(10, Math.max(0, Number(e.target.value) || 0)) })}
+              />
+            )}
+          </Field>
           {errorForm && <Notice tone="error">{errorForm}</Notice>}
           <div className="modal-action">
             <button type="button" className="btn btn-ghost" onClick={() => setAbierto(false)}>

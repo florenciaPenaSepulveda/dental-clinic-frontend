@@ -12,6 +12,7 @@ interface Props {
   slot: Pick<SlotDisponible, "id"> | null;
   titulo: string;
   servicios: Servicio[];
+  sobrecupo?: boolean;
   onClose: () => void;
   onCreada: (sobrecupo: boolean) => void;
 }
@@ -20,7 +21,7 @@ interface FormularioProps extends Omit<Props, "slot" | "titulo"> {
   slotId: number;
 }
 
-const Formulario = ({ slotId, servicios, onClose, onCreada }: FormularioProps) => {
+const Formulario = ({ slotId, servicios, sobrecupo = false, onClose, onCreada }: FormularioProps) => {
   const seleccion = usePacienteSelector();
   const [servicioId, setServicioId] = useState("");
   const [motivo, setMotivo] = useState("");
@@ -49,6 +50,7 @@ const Formulario = ({ slotId, servicios, onClose, onCreada }: FormularioProps) =
         {
           slot: slotId,
           paciente,
+          ...(sobrecupo ? { sobrecupo: true } : {}),
           ...(servicioId ? { servicio: Number(servicioId) } : {}),
           ...(motivo.trim() ? { motivo: motivo.trim() } : {}),
         },
@@ -63,6 +65,9 @@ const Formulario = ({ slotId, servicios, onClose, onCreada }: FormularioProps) =
 
   return (
     <form onSubmit={enviar} className="space-y-4">
+      {sobrecupo && (
+        <Notice tone="info">Este horario ya está completo: la cita se agenda como sobrecupo y cuenta para el límite de sobrecupos del día.</Notice>
+      )}
       <PacienteSelector control={seleccion} />
       <label className="form-control">
         <span className="label py-1">
@@ -98,9 +103,9 @@ const Formulario = ({ slotId, servicios, onClose, onCreada }: FormularioProps) =
   );
 };
 
-const AgendarModal = ({ slot, titulo, servicios, onClose, onCreada }: Props) => (
+const AgendarModal = ({ slot, titulo, servicios, sobrecupo, onClose, onCreada }: Props) => (
   <Modal open={slot !== null} title={titulo} onClose={onClose}>
-    {slot && <Formulario key={slot.id} slotId={slot.id} servicios={servicios} onClose={onClose} onCreada={onCreada} />}
+    {slot && <Formulario key={slot.id} slotId={slot.id} servicios={servicios} sobrecupo={sobrecupo} onClose={onClose} onCreada={onCreada} />}
   </Modal>
 );
 

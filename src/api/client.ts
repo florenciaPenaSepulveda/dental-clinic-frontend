@@ -17,6 +17,7 @@ import type {
   Servicio,
   ServicioInput,
   ConflictosDeServicio,
+  ResumenSobrecupos,
   SlotDisponible,
   SlotSemana,
 } from "./types";
@@ -102,6 +103,10 @@ export const api = {
     request<Sesion>("/auth/cambiar-clave/", { method: "POST", body: JSON.stringify({ actual, nueva }) }),
   servicios: () => request<Servicio[]>("/api/servicios/"),
   crearServicio: (data: ServicioInput) => request<Servicio>("/api/servicios/", { method: "POST", body: JSON.stringify(data) }),
+  sobrecupos: (dentistaId: number, desde: string) =>
+    request<ResumenSobrecupos>(`/sobrecupos/${query({ dentista: dentistaId, desde })}`),
+  fijarSobrecupos: (data: { dentista: number; fecha?: string; cupos: number | null }) =>
+    request<unknown>("/sobrecupos/", { method: "PUT", body: JSON.stringify(data) }),
   conflictosDeServicio: (id: number, duracionMin: number) =>
     request<ConflictosDeServicio>(`/api/servicios/${id}/conflictos/${query({ duracion_min: duracionMin })}`),
   actualizarServicio: (id: number, data: ServicioInput) =>

@@ -41,7 +41,7 @@ beforeEach(() => {
   mocked.dentistas.mockResolvedValue([dentista, dentistaSinEspecialidad]);
   mocked.servicios.mockResolvedValue([servicio]);
   mocked.pacientes.mockResolvedValue(pagina([paciente, pacienteSinContacto]));
-  mocked.slotsPorFecha.mockResolvedValue([disponible(1, "08:00:00"), disponible(2, "08:30:00"), disponible(3, "09:00:00", 1, 1), disponible(4, "09:30:00")]);
+  mocked.slotsPorFecha.mockResolvedValue([disponible(1, "08:00:00"), disponible(2, "08:30:00"), disponible(3, "09:00:00"), disponible(4, "09:30:00")]);
 });
 
 describe("HomePage", () => {
@@ -102,7 +102,7 @@ describe("ReservationPage", () => {
 
   it("muestra el estado de cada horario según la ocupación", async () => {
     const user = userEvent.setup();
-    mocked.slotsPorFecha.mockResolvedValue([disponible(1, "08:00:00"), disponible(2, "08:30:00", 1, 0, 1), disponible(3, "09:00:00", 1, 1, 2, 1)]);
+    mocked.slotsPorFecha.mockResolvedValue([disponible(1, "08:00:00"), disponible(2, "08:30:00", 1, 1), disponible(3, "09:00:00", 1, 2, 1)]);
     renderPage(<ReservationPage />);
     await elegirDentista(user);
     expect(screen.getByRole("button", { name: "08:00" })).toBeEnabled();
@@ -111,9 +111,19 @@ describe("ReservationPage", () => {
     expect(mocked.slotsPorFecha).toHaveBeenCalledWith(expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), 1, undefined);
   });
 
-  it("permite reservar en sobrecupo cuando el horario está lleno pero admite más", async () => {
+  it("el paciente ve completo un horario que admitiría sobrecupo", async () => {
     const user = userEvent.setup();
-    mocked.slotsPorFecha.mockResolvedValue([disponible(1, "08:00:00"), disponible(3, "09:00:00", 1, 1, 1, 0)]);
+    guardarSesion(sesionDe("paciente"));
+    mocked.slotsPorFecha.mockResolvedValue([disponible(1, "08:00:00"), disponible(3, "09:00:00", 1, 1, 0, true)]);
+    renderPage(<ReservationPage />);
+    await elegirDentista(user);
+    expect(screen.getByRole("button", { name: "09:00" })).toBeDisabled();
+    expect(screen.queryByText(/Ámbar/)).not.toBeInTheDocument();
+  });
+
+  it("el personal puede reservar en sobrecupo cuando el horario está completo y admite uno", async () => {
+    const user = userEvent.setup();
+    mocked.slotsPorFecha.mockResolvedValue([disponible(1, "08:00:00"), disponible(3, "09:00:00", 1, 1, 0, true)]);
     mocked.crearReserva.mockResolvedValue({ id: 9, sobrecupo: true });
     mocked.buscarPaciente.mockResolvedValue(paciente);
     renderPage(<ReservationPage />);
@@ -123,7 +133,8 @@ describe("ReservationPage", () => {
     await screen.findByText("Paciente registrado");
     await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
     expect(await screen.findByRole("status")).toHaveTextContent(/sobrecupo/i);
-    expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 3, paciente: 1 }, []);
+    expect(screen.getByText(/Ámbar: sobrecupo/)).toBeInTheDocument();
+    expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 3, paciente: 1, sobrecupo: true }, []);
   });
 
   it("deshabilita los horarios ocupados por una cita anterior y los que no alcanzan para el servicio", async () => {

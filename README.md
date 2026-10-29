@@ -22,6 +22,7 @@ Sin iniciar sesión también puedes **reservar una hora** desde "Reservar hora".
 
 - **Reservar hora** sin cuenta: dentista, servicio, fecha y horario; el RUT identifica al paciente.
 - **Agenda semanal** por dentista: detalle de cada reserva, reagendar, cancelar y generar horarios.
+- **Sobrecupos** manejados por recepción o por el propio dentista, con un límite por día y por fecha.
 - **Duración de los servicios:** una cita larga bloquea los horarios siguientes, y al cambiar una duración se avisa de las citas que chocarían.
 - **Roles:** recepción, dentistas y pacientes ven solo lo que les corresponde.
 - **Ficha clínica**, exámenes adjuntos, cuentas de acceso y búsqueda de pacientes.

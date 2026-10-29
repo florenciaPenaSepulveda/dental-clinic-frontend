@@ -5,7 +5,7 @@ import { api } from "../api/client";
 import { AuthProvider } from "../hooks/useAuth";
 import { todayISO } from "../lib/format";
 import { guardarSesion } from "../lib/session";
-import { etiquetaDia, lunesDe, sumarDias } from "../lib/semana";
+import { etiquetaDia, etiquetaDiaCompleta, lunesDe, sumarDias } from "../lib/semana";
 import { archivo, atencion, dentista, dentistaSinEspecialidad, historialItem, paciente, pacienteSinContacto, reserva, servicio, sesionDe, slotSemana } from "../test/fixtures";
 import AppointmentsPage from "./AppointmentsPage";
 
@@ -23,6 +23,8 @@ vi.mock("../api/client", () => ({
     eliminarArchivo: vi.fn(),
     cancelarReserva: vi.fn(),
     generarSlots: vi.fn(),
+    sobrecupos: vi.fn(),
+    fijarSobrecupos: vi.fn(),
     historialPaciente: vi.fn(),
     archivo: vi.fn(),
   },
@@ -40,8 +42,18 @@ const semanaBase = () => [
   slotSemana(11, lunes, "09:30:00"),
   slotSemana(12, martes, "09:00:00"),
   slotSemana(13, sabado, "10:00:00"),
-  slotSemana(14, lunes, "10:00:00", [{ ...reserva(2, 14), paciente: pacienteSinContacto }], 1, 1),
+  slotSemana(14, lunes, "10:00:00", [{ ...reserva(2, 14), paciente: pacienteSinContacto }]),
 ];
+
+const resumenFuturo = (permitidos = 2, usados = 0) => ({
+  por_defecto: 1,
+  dias: Array.from({ length: 5 }, (_, indice) => ({ fecha: todayISO(1 + indice), permitidos, usados: indice === 0 ? usados : 0, personalizado: indice === 1 })),
+});
+
+const resumenSobrecupos = (permitidos = 2, usados = 0) => ({
+  por_defecto: 1,
+  dias: Array.from({ length: 7 }, (_, indice) => ({ fecha: sumarDias(lunes, indice), permitidos, usados: indice === 0 ? usados : 0, personalizado: indice === 1 })),
+});
 
 const renderAgenda = () =>
   render(
@@ -69,6 +81,8 @@ beforeEach(() => {
   mocked.dentistas.mockResolvedValue([dentista, dentistaSinEspecialidad]);
   mocked.servicios.mockResolvedValue([servicio]);
   mocked.semana.mockResolvedValue(semanaBase());
+  mocked.sobrecupos.mockResolvedValue(resumenSobrecupos());
+  mocked.fijarSobrecupos.mockResolvedValue({});
   URL.createObjectURL = vi.fn(() => "blob:prueba");
   URL.revokeObjectURL = vi.fn();
   vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
@@ -200,14 +214,40 @@ describe("Agendar desde la semana", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("El slot está lleno");
   });
 
-  it("permite agregar un sobrecupo y cerrar el formulario", async () => {
+  it("ofrece agendar un sobrecupo solo en los horarios completos", async () => {
     const user = userEvent.setup();
     await abrirSemana(user);
-    expect(screen.getByRole("button", { name: `Agendar ${etiquetaDia(lunes)} 10:00` })).toHaveTextContent("+ Agregar");
-    expect(screen.queryByRole("button", { name: `Agendar ${etiquetaDia(lunes)} 09:00` })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: `Agendar ${etiquetaDia(lunes)} 10:00` }));
-    await user.click(await screen.findByRole("button", { name: "Cancelar" }));
+    expect(await screen.findByRole("button", { name: `Agendar sobrecupo ${etiquetaDia(lunes)} 10:00` })).toHaveTextContent("+ Sobrecupo");
+    expect(screen.queryByRole("button", { name: `Agendar ${etiquetaDia(lunes)} 10:00` })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: `Agendar sobrecupo ${etiquetaDia(lunes)} 09:30` })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: `Agendar sobrecupo ${etiquetaDia(lunes)} 10:00` }));
+    const formulario = dialogo(`Agendar sobrecupo ${etiquetaDiaCompleta(lunes)} · 10:00`);
+    expect(formulario.getByText(/se agenda como sobrecupo/)).toBeInTheDocument();
+    await user.click(formulario.getByRole("button", { name: "Cancelar" }));
     expect(screen.queryByLabelText("RUT del paciente")).not.toBeInTheDocument();
+  });
+
+  it("no ofrece el sobrecupo cuando se agotó el límite del día", async () => {
+    const user = userEvent.setup();
+    mocked.sobrecupos.mockResolvedValue(resumenSobrecupos(2, 2));
+    await abrirSemana(user);
+    await screen.findByText("Por defecto cada día");
+    expect(screen.queryByRole("button", { name: /Agendar sobrecupo/ })).not.toBeInTheDocument();
+  });
+
+  it("envía el sobrecupo de forma explícita al agendarlo", async () => {
+    const user = userEvent.setup();
+    mocked.buscarPaciente.mockResolvedValue(paciente);
+    mocked.crearReserva.mockResolvedValue({ id: 9, sobrecupo: true });
+    await abrirSemana(user);
+    await user.click(await screen.findByRole("button", { name: `Agendar sobrecupo ${etiquetaDia(lunes)} 10:00` }));
+    const formulario = dialogo(`Agendar sobrecupo ${etiquetaDiaCompleta(lunes)} · 10:00`);
+    await user.type(formulario.getByLabelText("RUT del paciente"), "123456785");
+    await user.click(formulario.getByRole("button", { name: "Buscar" }));
+    await formulario.findByText("Paciente registrado");
+    await user.click(formulario.getByRole("button", { name: "Agendar" }));
+    expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 14, paciente: 1, sobrecupo: true }, []);
+    expect(await screen.findByRole("status")).toHaveTextContent("Reserva creada como sobrecupo.");
   });
 });
 
@@ -249,8 +289,9 @@ describe("Detalle de la reserva", () => {
     const user = userEvent.setup();
     const detalle = await abrirReserva(user);
     const valores = detalle.getAllByRole("option").map((opcion) => (opcion as HTMLOptionElement).value);
-    expect(valores).toEqual(expect.arrayContaining(["", "11", "12", "13", "14"]));
+    expect(valores).toEqual(expect.arrayContaining(["", "11", "12", "13"]));
     expect(valores).not.toContain("10");
+    expect(valores).not.toContain("14");
   });
 
   it("muestra el error si no se puede guardar", async () => {
@@ -427,6 +468,50 @@ describe("Horarios ocupados por la duración", () => {
     await screen.findByRole("button", { name: `Agendar ${etiquetaDia(lunes)} 10:00` });
     expect(screen.getByText("Ocupado")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: `Agendar ${etiquetaDia(lunes)} 09:30` })).not.toBeInTheDocument();
+  });
+});
+
+describe("Gestión de sobrecupos", () => {
+  const panelDeSobrecupos = async () => within((await screen.findByRole("heading", { name: "Sobrecupos" })).closest("section") as HTMLElement);
+
+  it("muestra lo usado y lo permitido de cada día y deja ajustarlo", async () => {
+    const user = userEvent.setup();
+    const manana = todayISO(1);
+    mocked.sobrecupos.mockResolvedValue(resumenFuturo(2, 1));
+    await abrirSemana(user);
+    const panel = await panelDeSobrecupos();
+    expect(panel.getByText("Por defecto cada día")).toBeInTheDocument();
+    expect(panel.getByLabelText(`Sobrecupos usados el ${etiquetaDia(manana)}`).parentElement).toHaveTextContent("1 de 2 usados");
+    await user.click(panel.getByRole("button", { name: `Aumentar sobrecupos del ${etiquetaDia(manana)}` }));
+    expect(mocked.fijarSobrecupos).toHaveBeenCalledWith({ dentista: 1, fecha: manana, cupos: 3 });
+  });
+
+  it("no deja bajar el límite de un día por debajo de lo ya agendado", async () => {
+    const user = userEvent.setup();
+    mocked.sobrecupos.mockResolvedValue(resumenFuturo(1, 1));
+    await abrirSemana(user);
+    const panel = await panelDeSobrecupos();
+    expect(panel.getByRole("button", { name: `Disminuir sobrecupos del ${etiquetaDia(todayISO(1))}` })).toBeDisabled();
+  });
+
+  it("cambia el valor por defecto y restablece un día con valor propio", async () => {
+    const user = userEvent.setup();
+    mocked.sobrecupos.mockResolvedValue(resumenFuturo());
+    await abrirSemana(user);
+    const panel = await panelDeSobrecupos();
+    await user.click(panel.getByRole("button", { name: "Aumentar sobrecupos por defecto" }));
+    expect(mocked.fijarSobrecupos).toHaveBeenCalledWith({ dentista: 1, cupos: 2 });
+    await user.click(panel.getByRole("button", { name: `Restablecer sobrecupos del ${etiquetaDia(todayISO(2))}` }));
+    expect(mocked.fijarSobrecupos).toHaveBeenCalledWith({ dentista: 1, fecha: todayISO(2), cupos: null });
+  });
+
+  it("muestra el error si el servidor rechaza el cambio", async () => {
+    const user = userEvent.setup();
+    mocked.fijarSobrecupos.mockRejectedValue(new Error("Ya hay 1 sobrecupo agendado ese día"));
+    await abrirSemana(user);
+    const panel = await panelDeSobrecupos();
+    await user.click(panel.getByRole("button", { name: "Aumentar sobrecupos por defecto" }));
+    expect(await screen.findByText("Ya hay 1 sobrecupo agendado ese día")).toBeInTheDocument();
   });
 });
 
