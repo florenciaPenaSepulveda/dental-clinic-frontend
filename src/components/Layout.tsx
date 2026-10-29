@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import Breadcrumbs from "./Breadcrumbs";
+import { esDemo } from "./DemoNota";
 
 const publicLinks = [
   { to: "/", label: "Inicio", end: true },
@@ -38,7 +39,7 @@ export const Navbar = () => {
   const links = enlacesDe(sesion?.rol, sesion?.debe_cambiar_clave);
 
   return (
-    <header className="sticky top-0 z-30 bg-primary text-primary-content shadow">
+    <header className="bg-primary text-primary-content shadow">
       <a
         href="#contenido"
         className="sr-only rounded-btn bg-base-100 px-3 py-2 text-sm font-medium text-primary focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50"
@@ -79,10 +80,10 @@ export const Footer = () => (
 
 // Solo en el sitio de demostración (VITE_DEMO=true al compilar): avisa que los datos son ficticios y se reinician.
 export const AvisoDemo = () =>
-  import.meta.env.VITE_DEMO === "true" ? (
-    <div role="note" className="border-b border-warning/30 bg-warning/10 px-4 py-2 text-center text-xs text-neutral">
-      <strong>Demostración:</strong> los datos son ficticios y se reinician cuando el servidor se duerme (tras unos 15 minutos sin uso).
-      No ingreses datos reales. La primera carga puede tardar hasta un minuto.
+  esDemo() ? (
+    <div role="note" className="border-b border-warning/50 bg-warning/20 px-4 py-2 text-center text-sm text-neutral">
+      <strong>Demostración:</strong> los datos son ficticios y se borran cuando el servidor se reinicia (tras unos 15 minutos sin uso o al
+      actualizar la demo), incluidas las cuentas y reservas que crees. No ingreses datos reales.
     </div>
   ) : null;
 
@@ -116,8 +117,10 @@ const Layout = () => {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <AvisoDemo />
-      <Navbar />
+      <div className="sticky top-0 z-30">
+        <AvisoDemo />
+        <Navbar />
+      </div>
       <main ref={principal} id="contenido" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 focus:outline-none">
         <Breadcrumbs />
         <Outlet />

@@ -126,6 +126,22 @@ describe("ReservationPage", () => {
     expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 3, paciente: 1 }, []);
   });
 
+  it("un paciente con sesión reserva a su nombre sin pedir el RUT", async () => {
+    const user = userEvent.setup();
+    guardarSesion(sesionDe("paciente"));
+    mocked.crearReserva.mockResolvedValue({ id: 9, sobrecupo: false });
+    renderPage(<ReservationPage />);
+    await elegirDentista(user);
+    await user.click(screen.getByRole("button", { name: "08:00" }));
+    const ficha = screen.getByLabelText("Paciente de la sesión");
+    expect(ficha).toHaveTextContent("Juan Soto · RUT 12.345.678-5");
+    expect(screen.queryByLabelText("RUT del paciente")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Confirmar reserva" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("La verás en Mi historial");
+    expect(mocked.crearReserva).toHaveBeenCalledWith({ slot: 1, paciente: 1 }, []);
+    expect(mocked.buscarPaciente).not.toHaveBeenCalled();
+  });
+
   it("encuentra al paciente por RUT, muestra sus datos y reserva con un servicio", async () => {
     const user = userEvent.setup();
     mocked.buscarPaciente.mockResolvedValue(paciente);

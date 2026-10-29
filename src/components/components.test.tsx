@@ -47,7 +47,7 @@ describe("Layout", () => {
         </AuthProvider>
       </MemoryRouter>,
     );
-    expect(screen.getByRole("note")).toHaveTextContent("los datos son ficticios y se reinician");
+    expect(screen.getByRole("note")).toHaveTextContent("los datos son ficticios y se borran cuando el servidor se reinicia");
     vi.unstubAllEnvs();
   });
 });

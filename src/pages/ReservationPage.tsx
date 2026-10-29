@@ -5,6 +5,7 @@ import type { SlotDisponible } from "../api/types";
 import DateField from "../components/DateField";
 import PageHeader from "../components/PageHeader";
 import { PacienteSelector, usePacienteSelector } from "../components/PacienteSelector";
+import { useAuth } from "../hooks/useAuth";
 import SelectorArchivos from "../components/SelectorArchivos";
 import { EmptyState, Notice, Spinner } from "../components/States";
 import { useLoad } from "../hooks/useLoad";
@@ -35,6 +36,8 @@ const ReservationPage = () => {
   const [fecha, setFecha] = useState(todayISO(1));
   const [slotId, setSlotId] = useState<number | null>(null);
   const seleccion = usePacienteSelector();
+  const { sesion } = useAuth();
+  const pacienteConSesion = sesion?.rol === "paciente" && sesion.paciente_id ? sesion : null;
   const [motivo, setMotivo] = useState("");
   const [archivos, setArchivos] = useState<File[]>([]);
   const [errorArchivos, setErrorArchivos] = useState("");
@@ -70,7 +73,7 @@ const ReservationPage = () => {
   const validar = (): string => {
     if (!dentistaId) return "Elige un dentista.";
     if (slotId === null) return "Elige un horario disponible.";
-    return seleccion.validar() || validarArchivos(archivos);
+    return (pacienteConSesion ? "" : seleccion.validar()) || validarArchivos(archivos);
   };
 
   const reservar = async (event: FormEvent) => {
@@ -83,7 +86,7 @@ const ReservationPage = () => {
     setEnviando(true);
     setAviso(null);
     try {
-      const paciente = await seleccion.resolver();
+      const paciente = pacienteConSesion ? (pacienteConSesion.paciente_id as number) : await seleccion.resolver();
       const creada = await api.crearReserva(
         {
           slot: slotId as number,
@@ -98,7 +101,7 @@ const ReservationPage = () => {
       const detalle = elegido && profesional ? ` Te esperamos el ${formatFechaLarga(fecha)} a las ${formatHora(elegido.hora)} con ${nombreCompleto(profesional)}.` : "";
       setAviso({
         tone: "success",
-        text: `${creada.sobrecupo ? "Reserva confirmada como sobrecupo." : "Reserva confirmada."}${detalle} Si el paciente tiene email registrado, recibirá la confirmación por correo.`,
+        text: `${creada.sobrecupo ? "Reserva confirmada como sobrecupo." : "Reserva confirmada."}${detalle} ${pacienteConSesion ? "La verás en Mi historial, en Próximas citas." : "Si el paciente tiene email registrado, recibirá la confirmación por correo."}`,
       });
       setSlotId(null);
       seleccion.reiniciar();
@@ -203,7 +206,17 @@ const ReservationPage = () => {
 
         <section className="surface space-y-4">
           <h2 className="section-title">Paciente</h2>
-          <PacienteSelector control={seleccion} />
+          {pacienteConSesion ? (
+            <div className="rounded-box border border-success/40 bg-success/10 p-3 text-sm" aria-label="Paciente de la sesión">
+              <p className="font-semibold">Reservarás a tu nombre</p>
+              <p className="mt-1">
+                {pacienteConSesion.nombre} · RUT {pacienteConSesion.username}
+              </p>
+              <p className="hint mt-1">La reserva quedará en tu historial.</p>
+            </div>
+          ) : (
+            <PacienteSelector control={seleccion} />
+          )}
 
           <label className="form-control">
             <span className="label py-1">

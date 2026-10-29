@@ -1,4 +1,5 @@
 import { api } from "../api/client";
+import DemoNota from "../components/DemoNota";
 import HistorialLista from "../components/HistorialLista";
 import PageHeader from "../components/PageHeader";
 import { EmptyState, Notice, Spinner } from "../components/States";
@@ -14,6 +15,7 @@ const MyHistoryPage = () => {
         title="Mi historial"
         subtitle={data ? `${nombreCompleto(data.paciente)} · RUT ${data.paciente.rut}` : "Tus citas y atenciones en la clínica"}
       />
+      <DemoNota>tus citas se borran cuando el servidor se reinicia (tras unos 15 minutos sin uso o al actualizar la demo).</DemoNota>
       {loading ? (
         <Spinner />
       ) : error || !data ? (

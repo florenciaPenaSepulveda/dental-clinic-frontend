@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import DemoNota from "../components/DemoNota";
 import PageHeader from "../components/PageHeader";
 import PasswordField from "../components/PasswordField";
 import { Notice } from "../components/States";
@@ -52,6 +53,9 @@ const ActivateAccountPage = () => {
   return (
     <>
       <PageHeader title="Activar mi cuenta" subtitle="Consulta tu historial de atenciones con tu RUT y una contraseña." />
+      <div className="mx-auto max-w-md">
+        <DemoNota>la cuenta que actives se borra cuando el servidor se reinicia. Para pruebas largas usa las cuentas de demostración del README.</DemoNota>
+      </div>
       <form onSubmit={enviar} className="surface mx-auto max-w-md space-y-4">
         <label className="form-control">
           <span className="label py-1">
